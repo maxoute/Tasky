@@ -1,0 +1,35 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+Objectif :
+
+Décrire le parcours utilisateur dans l’application.
+
+Flux principal :
+
+L'utilisateur arrive sur la page d'accueil
+
+Il saisit des thèmes ou objectifs
+
+Le LLM génère les to-do et les affiche
+
+L'utilisateur coche/décoche les tâches
+
+Les données sont sauvegardées dans un fichier local
+
+Accès possible à :
+
+La vue "Tracking" des habitudes
+
+Le rapport hebdomadaire
+
+Les recommandations IA
+
+Flux secondaire :
+
+L’utilisateur peut entrer un objectif → l’IA génère un plan SMART
+
+Chaque tâche reçoit un tag Eisenhower automatiquement

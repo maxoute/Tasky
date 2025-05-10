@@ -1,0 +1,27 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+├── frontend/
+│   ├── public/
+│   ├── src/
+│   │   ├── components/            # Composants réutilisables
+│   │   │   ├── Sidebar.jsx
+│   │   │   ├── TaskList.jsx
+│   │   │   ├── HabitTracker.jsx
+│   │   │   └── SmartGoal.jsx
+│   │   │
+│   │   ├── pages/                 # Pages principales
+│   │   │   ├── Dashboard.jsx
+│   │   │   ├── Tracking.jsx
+│   │   │   ├── WeeklyReport.jsx
+│   │   │   └── SmartObjectives.jsx
+│   │   │
+│   │   ├── services/              # Appels API vers Flask
+│   │   │   └── api.js
+│   │   │
+│   │   └── App.jsx
+│   ├── package.json
+│   └── tailwind.config.js
+│

@@ -1,0 +1,11 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+python
+react 
+supabase 
+fastapi
+
+et n'utilise pas flask

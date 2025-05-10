@@ -1,0 +1,36 @@
+
+> assistant-todo@0.1.0 start
+> react-scripts start
+
+node:internal/modules/cjs/loader:1412
+  throw err;
+  ^
+
+Error: Cannot find module 'which'
+Require stack:
+- /Users/maxens/Desktop/github-projects/Mentor IA/frontend/node_modules/cross-spawn/lib/util/resolveCommand.js
+- /Users/maxens/Desktop/github-projects/Mentor IA/frontend/node_modules/cross-spawn/lib/parse.js
+- /Users/maxens/Desktop/github-projects/Mentor IA/frontend/node_modules/cross-spawn/index.js
+- /Users/maxens/Desktop/github-projects/Mentor IA/frontend/node_modules/react-dev-utils/crossSpawn.js
+- /Users/maxens/Desktop/github-projects/Mentor IA/frontend/node_modules/react-scripts/bin/react-scripts.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1409:15)
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1060:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1065:22)
+    at Function._load (node:internal/modules/cjs/loader:1214:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:234:24)
+    at Module.require (node:internal/modules/cjs/loader:1495:12)
+    at require (node:internal/modules/helpers:135:16)
+    at Object.<anonymous> (/Users/maxens/Desktop/github-projects/Mentor IA/frontend/node_modules/cross-spawn/lib/util/resolveCommand.js:4:15)
+    at Module._compile (node:internal/modules/cjs/loader:1739:14) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/maxens/Desktop/github-projects/Mentor IA/frontend/node_modules/cross-spawn/lib/util/resolveCommand.js',
+    '/Users/maxens/Desktop/github-projects/Mentor IA/frontend/node_modules/cross-spawn/lib/parse.js',
+    '/Users/maxens/Desktop/github-projects/Mentor IA/frontend/node_modules/cross-spawn/index.js',
+    '/Users/maxens/Desktop/github-projects/Mentor IA/frontend/node_modules/react-dev-utils/crossSpawn.js',
+    '/Users/maxens/Desktop/github-projects/Mentor IA/frontend/node_modules/react-scripts/bin/react-scripts.js'
+  ]
+}
+
+Node.js v23.6.1

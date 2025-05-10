@@ -1,0 +1,31 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+├── backend/
+│   ├── app.py                     # Point d'entrée Flask
+│   ├── config.py                  # Variables de config/env
+│   ├── .env                       # Clé API, config locales
+│   ├── requirements.txt
+│
+│   ├── routes/                    # Toutes les routes Flask
+│   │   ├── todos.py               # CRUD tâches
+│   │   ├── habits.py              # Suivi d'habitudes
+│   │   ├── analytics.py           # Rapport hebdomadaire
+│   │   └── smart.py               # Objectifs SMART, Eisenhower
+│
+│   ├── services/                  # Logique métier + appels IA
+│   │   ├── llm_service.py         # Appels OpenAI ou Ollama
+│   │   ├── task_service.py        # Génération / analyse tâches
+│   │   └── tracking_service.py    # Logique streaks, habitudes
+│
+│   ├── storage/                   # Fichiers JSON ou DB
+│   │   ├── todos.json
+│   │   └── habits.json
+│
+│   └── utils/                     # Fonctions auxiliaires
+│       ├── date_utils.py
+│       └── categorizer.py
+│
+│
