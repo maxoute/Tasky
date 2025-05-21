@@ -49,4 +49,10 @@ Thumbs.db
 .idea/
 .vscode/
 *.swp
-*.swo 
+*.swo
+
+# Docker
+*.log
+logs/
+backups/
+*.pyc 

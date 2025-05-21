@@ -121,6 +121,15 @@ OLLAMA_MODEL=llama3
 python backend/app_ollama.py
 ```
 
-Le fichier `backend/app_ollama.py` est déjà configuré pour utiliser Ollama. Assurez-vous de démarrer le service Ollama avant de lancer l'application. 
+Le fichier `backend/app_ollama.py` est déjà configuré pour utiliser Ollama. Assurez-vous de démarrer le service Ollama avant de lancer l'application.
+
+# Lancement avec Docker Compose
+
+```bash
+docker-compose up --build
+```
+
+- Backend : http://localhost:8000
+- Frontend : http://localhost:3000
 
 
