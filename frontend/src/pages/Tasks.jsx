@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 
 // Client API avec configuration de base
 const apiClient = axios.create({
-  baseURL: 'http://localhost:8000/api',
+  baseURL: 'http://localhost:8001/api',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',

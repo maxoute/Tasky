@@ -11,7 +11,7 @@ export interface Task {
 
 // Création de l'instance axios avec configuration
 const apiClient = axios.create({
-  baseURL: 'http://localhost:8000/api',
+  baseURL: 'http://localhost:8001/api',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',

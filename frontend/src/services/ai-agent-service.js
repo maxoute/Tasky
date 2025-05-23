@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Création d'une instance axios configurée pour les appels API
 const apiClient = axios.create({
-  baseURL: 'http://localhost:8000',  // Pointer vers le backend FastAPI
+  baseURL: 'http://localhost:8001',  // Pointer vers le backend FastAPI
   timeout: 30000, // Augmenter le timeout pour permettre au LLM de générer une réponse
   headers: {
     'Content-Type': 'application/json',

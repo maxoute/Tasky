@@ -1,7 +1,7 @@
 // Test de l'API pour vérifier les routes
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8000';
+const API_URL = 'http://localhost:8001';
 
 const testApi = async () => {
   try {

@@ -5,7 +5,7 @@ services:
     build: ./backend
     container_name: backend
     ports:
-      - "8000:8000"
+      - "8001:8000"
     env_file:
       - ./backend/.env
     restart: always
