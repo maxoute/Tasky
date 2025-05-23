@@ -13,7 +13,7 @@ command -v npm >/dev/null 2>&1 || { echo "npm est requis mais n'est pas install√
 # V√©rification des variables d'environnement
 if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_KEY" ]; then
     echo "Erreur: Les variables d'environnement SUPABASE_URL et SUPABASE_KEY sont requises."
-    exit 1
+  exit 1
 fi
 
 # Nettoyage des anciens builds

@@ -199,45 +199,30 @@ build_frontend() {
 # Fonction pour démarrer le backend
 start_backend() {
   log_message "INFO" "Démarrage du backend FastAPI..."
-  
   setup_virtualenv
   rotate_logs "$LOGS_DIR/backend.log"
-  
-  # Aller dans le répertoire backend et démarrer FastAPI en arrière-plan
   cd $BACKEND_DIR
-  HOST=$HOST python app_fastapi.py > "$LOGS_DIR/backend.log" 2>&1 &
+  uvicorn app_fastapi:app --host 0.0.0.0 --port 8000 > ../logs/backend.log 2>&1 &
   BACKEND_PID=$!
   cd ..
-  
-  # Démarrer le monitoring en arrière-plan
   monitor_resources $BACKEND_PID "Backend" &
   MONITOR_PID=$!
-  
-  # Enregistrer les PIDs
   echo "backend:$BACKEND_PID" > $PID_FILE
   echo "backend_monitor:$MONITOR_PID" >> $PID_FILE
-  
-  log_message "OK" "Backend démarré avec PID $BACKEND_PID sur http://$HOST:${BACKEND_PORT:-8000}"
+  log_message "OK" "Backend démarré avec PID $BACKEND_PID sur http://localhost:8000"
 }
 
 # Fonction pour démarrer le frontend
 start_frontend() {
   log_message "INFO" "Démarrage du frontend React..."
-  
   check_dependencies
   rotate_logs "$LOGS_DIR/frontend.log"
-  
-  # Démarrer React en arrière-plan
   cd $FRONTEND_DIR
-  HOST=$HOST NODE_ENV=production npm start > "$LOGS_DIR/frontend.log" 2>&1 &
+  NODE_ENV=development npm start > ../logs/frontend.log 2>&1 &
   FRONTEND_PID=$!
   cd ..
-  
-  # Démarrer le monitoring en arrière-plan
   monitor_resources $FRONTEND_PID "Frontend" &
   MONITOR_PID=$!
-  
-  # Ajouter les PIDs au fichier
   if [ -f $PID_FILE ]; then
     echo "frontend:$FRONTEND_PID" >> $PID_FILE
     echo "frontend_monitor:$MONITOR_PID" >> $PID_FILE
@@ -245,8 +230,7 @@ start_frontend() {
     echo "frontend:$FRONTEND_PID" > $PID_FILE
     echo "frontend_monitor:$MONITOR_PID" >> $PID_FILE
   fi
-  
-  log_message "OK" "Frontend démarré avec PID $FRONTEND_PID sur http://$HOST:${FRONTEND_PORT:-3000}"
+  log_message "OK" "Frontend démarré avec PID $FRONTEND_PID sur http://localhost:3000"
 }
 
 # Fonction pour arrêter les services
@@ -310,9 +294,13 @@ case "$1" in
     check_dependencies
     start_backend
     start_frontend
-    log_message "OK" "Application TASKY démarrée avec succès en mode production!"
-    echo -e "  Backend: ${BLUE}http://$HOST:${BACKEND_PORT:-8000}${NC}"
-    echo -e "  Frontend: ${BLUE}http://$HOST:${FRONTEND_PORT:-3000}${NC}"
+    log_message "OK" "Application TASKY démarrée avec succès en mode local !"
+    echo -e "  Backend: ${BLUE}http://localhost:8000${NC}"
+    echo -e "  Frontend: ${BLUE}http://localhost:3000${NC}"
+    echo -e "\n--- LOGS BACKEND ---"
+    tail -n 20 logs/backend.log
+    echo -e "\n--- LOGS FRONTEND ---"
+    tail -n 20 logs/frontend.log
     ;;
   stop)
     stop_services
