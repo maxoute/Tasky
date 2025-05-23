@@ -1,13 +1,8 @@
 import axios from 'axios';
+import { API_CONFIG } from '../config/api.js';
 
 // Création d'une instance axios configurée
-const api = axios.create({
-  baseURL: 'http://localhost:8001',  // Pointer directement vers le backend FastAPI
-  timeout: 10000,
-  headers: {
-    'Content-Type': 'application/json',
-  }
-});
+const api = axios.create(API_CONFIG);
 
 // Intercepteurs pour la gestion des erreurs
 api.interceptors.response.use(
@@ -229,7 +224,7 @@ export const categoryService = {
 // Test de connexion au backend
 export const testBackendConnection = async () => {
   try {
-    const response = await api.get('/api/health');
+    const response = await api.get('/health');
     return { success: true, message: 'Connexion au backend réussie', data: response.data };
   } catch (error) {
     console.error('Erreur de connexion au backend', error);

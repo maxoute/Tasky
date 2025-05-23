@@ -1,15 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
+import { API_CONFIG } from '../config/api.js';
 
 // Client API avec configuration de base
-const apiClient = axios.create({
-  baseURL: 'http://localhost:8001/api',
-  timeout: 10000,
-  headers: {
-    'Content-Type': 'application/json',
-  }
-});
+const apiClient = axios.create(API_CONFIG);
 
 // Ajouter des intercepteurs pour debug
 apiClient.interceptors.request.use(

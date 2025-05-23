@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { API_CONFIG } from '../config/api.js';
 
 export interface Task {
   id: number | string;
@@ -11,11 +12,8 @@ export interface Task {
 
 // Création de l'instance axios avec configuration
 const apiClient = axios.create({
-  baseURL: 'http://localhost:8001/api',
-  timeout: 10000,
-  headers: {
-    'Content-Type': 'application/json',
-  }
+  ...API_CONFIG,
+  baseURL: API_CONFIG.baseURL + '/api'  // Ajouter /api pour ce service
 });
 
 // Ajout d'intercepteurs pour le debug
