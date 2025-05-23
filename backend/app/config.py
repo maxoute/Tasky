@@ -12,6 +12,8 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Mentor IA"
     VERSION: str = "1.0.0"
     API_PREFIX: str = "/api/v1"
+    ENVIRONMENT: str = "development"
+    API_VERSION: str = "v1"
     DEBUG: bool = False
     
     # Sécurité
@@ -20,8 +22,9 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     
-    # CORS
+    # CORS - Support des deux formats
     ALLOWED_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:3001"]
+    CORS_ORIGINS: Optional[str] = None  # Format string JSON du .env
     
     # Base de données
     SUPABASE_URL: str
@@ -40,6 +43,7 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = True
+        extra = "ignore"  # Ignore les champs supplémentaires
 
 
 @lru_cache()
