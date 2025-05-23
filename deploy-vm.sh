@@ -76,7 +76,7 @@ SUPABASE_KEY=your-supabase-anon-key
 OPENAI_API_KEY=your-openai-api-key
 
 # CORS
-CORS_ORIGINS=["http://localhost:3000","http://localhost:80","http://your-domain.com"]
+CORS_ORIGINS=["http://localhost:3001","http://localhost:80","http://your-domain.com"]
 EOF
     log_warn "⚠️  IMPORTANT: Éditez backend/.env avec vos vraies clés API !"
 fi
@@ -108,7 +108,7 @@ fi
 # Afficher les ports
 log_info "Services déployés avec succès !"
 echo
-echo "📱 Frontend: http://$(hostname -I | awk '{print $1}'):3000"
+echo "📱 Frontend: http://$(hostname -I | awk '{print $1}'):3001"
 echo "🔧 Backend:  http://$(hostname -I | awk '{print $1}'):8000"
 echo "📊 API Docs: http://$(hostname -I | awk '{print $1}'):8000/docs"
 echo
@@ -118,4 +118,4 @@ echo "  - Redémarrer:          sudo docker-compose restart"
 echo "  - Arrêter:             sudo docker-compose down"
 echo "  - Mettre à jour:       ./deploy-vm.sh"
 echo
-log_warn "N'oubliez pas de configurer votre firewall pour les ports 3000 et 8000 !" 
+log_warn "N'oubliez pas de configurer votre firewall pour les ports 3001 et 8000 !" 

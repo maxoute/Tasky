@@ -71,7 +71,7 @@ SUPABASE_KEY=votre-clé-publique-supabase
 OPENAI_API_KEY=sk-votre-clé-openai
 
 # CORS (ajoutez l'IP de votre VM)
-CORS_ORIGINS=["http://localhost:3000","http://VOTRE-IP-VM:3000"]
+CORS_ORIGINS=["http://localhost:3001","http://VOTRE-IP-VM:3001"]
 ```
 
 ## Ports et Firewall
@@ -81,12 +81,12 @@ CORS_ORIGINS=["http://localhost:3000","http://VOTRE-IP-VM:3000"]
 ```bash
 # Ubuntu/Debian avec ufw
 sudo ufw allow 22    # SSH
-sudo ufw allow 3000  # Frontend
+sudo ufw allow 3001  # Frontend
 sudo ufw allow 8000  # Backend API
 sudo ufw enable
 
 # CentOS/RHEL avec firewalld
-sudo firewall-cmd --permanent --add-port=3000/tcp
+sudo firewall-cmd --permanent --add-port=3001/tcp
 sudo firewall-cmd --permanent --add-port=8000/tcp
 sudo firewall-cmd --reload
 ```
@@ -95,7 +95,7 @@ sudo firewall-cmd --reload
 
 Une fois déployé, l'application sera accessible via :
 
-- **Frontend**: `http://VOTRE-IP-VM:3000`
+- **Frontend**: `http://VOTRE-IP-VM:3001`
 - **Backend API**: `http://VOTRE-IP-VM:8000`
 - **Documentation API**: `http://VOTRE-IP-VM:8000/docs`
 
