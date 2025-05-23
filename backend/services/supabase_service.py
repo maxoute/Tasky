@@ -31,9 +31,9 @@ class SupabaseService:
     def _initialize(self):
         """Initialise la connexion à Supabase"""
         try:
-            url = os.environ.get("SUPABASE_URL")
-            key = os.environ.get("SUPABASE_KEY")
-            service_key = os.environ.get("SUPABASE_SERVICE_KEY")
+            url = os.environ.get("SUPABASE_URL", "").strip()
+            key = os.environ.get("SUPABASE_KEY", "").strip()
+            service_key = os.environ.get("SUPABASE_SERVICE_KEY", "").strip()
             
             if not url or not key:
                 raise ValueError("Les variables d'environnement SUPABASE_URL et SUPABASE_KEY sont requises")
