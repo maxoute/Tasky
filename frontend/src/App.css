@@ -8,7 +8,7 @@
   flex: 1;
   padding: 2rem;
   overflow-y: auto;
-}
+} 
 
 /* Animations d'entrée */
 @keyframes fadeInUp {

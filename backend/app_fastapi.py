@@ -150,7 +150,7 @@ async def serve_react(path: str = ""):
     # Ne pas traiter les routes /api ici
     if path.startswith("api"):
         return {"detail": "Not Found"}
-    
+        
     # Vérifier d'abord dans le dossier dist (Vite)
     vite_path = os.path.join(vite_dist_path, path)
     if os.path.isfile(vite_path):

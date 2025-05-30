@@ -44,7 +44,7 @@ const Dashboard = ({
   };
   
   console.log(`📊 [Dashboard] Stats calculées:`, calculatedStats);
-
+  
   useEffect(() => {
     getGoogleEventsToday().then(res => setGoogleEvents(res.events || [])).catch(() => {});
   }, []);
@@ -57,9 +57,9 @@ const Dashboard = ({
           <div className="md:col-span-1 xl:col-span-2 space-y-4 md:space-y-6">
             {/* Générateur de tâches */}
             <div className="animate-fadeInUp" style={{ animationDelay: '0.1s' }}>
-              <ThemeGenerator 
-                onTasksGenerated={onGenerateTasks} 
-              />
+            <ThemeGenerator 
+              onTasksGenerated={onGenerateTasks} 
+            />
             </div>
             
             {/* Productivité */}
@@ -110,23 +110,23 @@ const Dashboard = ({
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                   <h3 className="text-lg font-semibold text-gray-800 mb-4">🗓️ Événements Google</h3>
                   <ul className="space-y-3">
-                    {googleEvents.map(event => (
+                  {googleEvents.map(event => (
                       <li key={event.id} className="flex items-center p-3 bg-blue-50 rounded-lg">
                         <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
                         <div>
                           <p className="text-sm font-medium text-gray-800">{event.summary}</p>
-                          {event.start && event.start.dateTime && (
+                      {event.start && event.start.dateTime && (
                             <p className="text-xs text-gray-500">
                               {new Date(event.start.dateTime).toLocaleTimeString([], { 
                                 hour: '2-digit', 
                                 minute: '2-digit' 
                               })}
                             </p>
-                          )}
+                      )}
                         </div>
-                      </li>
-                    ))}
-                  </ul>
+                    </li>
+                  ))}
+                </ul>
                 </div>
               </div>
             )}
@@ -185,7 +185,7 @@ const Dashboard = ({
                           <p className="text-sm text-green-800 truncate">
                             {task.text.length > 35 ? task.text.slice(0, 32) + '...' : task.text}
                           </p>
-                        </div>
+                    </div>
                       ))}
                   </div>
                   
@@ -229,7 +229,7 @@ const Dashboard = ({
                           className={`w-2 h-2 rounded-full ${
                             i <= 4 ? 'bg-green-400' : 'bg-gray-200'
                           }`}
-                        />
+                      />
                       ))}
                     </div>
                   </div>

@@ -177,18 +177,18 @@ const ProductivityWidget = ({ userId, stats: taskStats }) => {
           {stats && stats.daily_data && (
             <div className="mb-6">
               <h3 className="text-sm font-medium text-gray-700 mb-4">📈 Évolution des habitudes</h3>
-              {renderChart()}
-              
+          {renderChart()}
+          
               <div className="mt-4 flex space-x-4">
-                <div className="flex items-center">
-                  <div className="w-3 h-3 rounded-full bg-green-500 mr-2"></div>
-                  <span className="text-sm text-gray-600">Temps de concentration</span>
-                </div>
-                <div className="flex items-center">
-                  <div className="w-3 h-3 rounded-full bg-amber-500 mr-2"></div>
-                  <span className="text-sm text-gray-600">Implémentation design</span>
-                </div>
-              </div>
+            <div className="flex items-center">
+              <div className="w-3 h-3 rounded-full bg-green-500 mr-2"></div>
+              <span className="text-sm text-gray-600">Temps de concentration</span>
+            </div>
+            <div className="flex items-center">
+              <div className="w-3 h-3 rounded-full bg-amber-500 mr-2"></div>
+              <span className="text-sm text-gray-600">Implémentation design</span>
+            </div>
+          </div>
             </div>
           )}
           
@@ -242,8 +242,8 @@ const ProductivityWidget = ({ userId, stats: taskStats }) => {
                   <div className="flex justify-between mt-2 text-xs text-gray-500">
                     <span>{taskStats.completed} terminées</span>
                     <span>{taskStats.pending} en cours</span>
-                  </div>
-                </div>
+              </div>
+              </div>
               )}
             </div>
           )}

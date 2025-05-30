@@ -90,33 +90,33 @@ const TodayTodoWidget = ({ tasks = [], onTaskUpdate, stats }) => {
           </div>
           
           <ul className="space-y-3">
-            {todayTasks.map(task => (
+          {todayTasks.map(task => (
               <li key={task.id} className="flex items-start group hover:bg-gray-50 p-2 rounded-lg transition-colors">
-                <button
-                  onClick={() => handleToggleTask(task.id)}
+              <button
+                onClick={() => handleToggleTask(task.id)}
                   className={`flex-shrink-0 w-5 h-5 rounded-full border mt-1 transition-all ${
-                    task.completed 
+                  task.completed 
                       ? 'bg-green-600 border-green-600' 
                       : 'border-gray-300 hover:border-green-400'
-                  }`}
-                >
-                  {task.completed && (
-                    <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                    </svg>
-                  )}
-                </button>
+                }`}
+              >
+                {task.completed && (
+                  <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
+              </button>
                 <div className="ml-3 flex-1 min-w-0">
-                  <p
-                    className={`text-sm font-medium ${task.completed ? 'text-gray-400 line-through' : 'text-gray-800'}`}
-                    title={task.text}
-                  >
-                    {shortTitle(task.text)}
-                  </p>
+                <p
+                  className={`text-sm font-medium ${task.completed ? 'text-gray-400 line-through' : 'text-gray-800'}`}
+                  title={task.text}
+                >
+                  {shortTitle(task.text)}
+                </p>
                   <div className="flex items-center mt-1 space-x-2">
                     <p className="text-xs text-gray-400">
-                      {task.description || (task.hashtags && task.hashtags.join(', '))}
-                    </p>
+                  {task.description || (task.hashtags && task.hashtags.join(', '))}
+                </p>
                     {task.eisenhower && (
                       <span className={`text-xs px-2 py-0.5 rounded-full ${
                         task.eisenhower === 'important_urgent' ? 'bg-red-100 text-red-700' :
@@ -131,27 +131,27 @@ const TodayTodoWidget = ({ tasks = [], onTaskUpdate, stats }) => {
                       </span>
                     )}
                   </div>
-                </div>
-                <button
-                  onClick={async () => {
-                    try {
+              </div>
+              <button
+                onClick={async () => {
+                  try {
                       await addGoogleEvent({ 
                         summary: task.text, 
                         description: task.description || '', 
                         start: task.deadline 
                       });
-                      alert('Tâche ajoutée à Google Calendar !');
-                    } catch (e) {
-                      alert('Erreur lors de l\'ajout à Google Calendar');
-                    }
-                  }}
+                    alert('Tâche ajoutée à Google Calendar !');
+                  } catch (e) {
+                    alert('Erreur lors de l\'ajout à Google Calendar');
+                  }
+                }}
                   className="opacity-0 group-hover:opacity-100 ml-2 text-xs text-blue-600 hover:text-blue-800 transition-all"
-                >
+              >
                   📅
-                </button>
-              </li>
-            ))}
-          </ul>
+              </button>
+            </li>
+          ))}
+        </ul>
         </div>
       )}
     </div>

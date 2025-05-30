@@ -213,11 +213,11 @@ const Tasks = () => {
       
       // Envoyer la tâche au backend
       await addTask(taskData);
-      
-      // Retirer la tâche de la liste des tâches générées
-      setGeneratedTasks(prev => prev.filter(t => t.id !== task.id));
-      
-      alert('Tâche ajoutée avec succès !');
+        
+        // Retirer la tâche de la liste des tâches générées
+        setGeneratedTasks(prev => prev.filter(t => t.id !== task.id));
+        
+        alert('Tâche ajoutée avec succès !');
     } catch (err) {
       console.error('Erreur lors de l\'ajout de la tâche générée:', err);
       alert('Erreur lors de l\'ajout de la tâche. Veuillez réessayer.');
