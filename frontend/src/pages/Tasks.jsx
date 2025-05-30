@@ -1,33 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { motion } from 'framer-motion';
-import { API_CONFIG } from '../config/api.js';
-
-// Client API avec configuration de base
-const apiClient = axios.create(API_CONFIG);
-
-// Ajouter des intercepteurs pour debug
-apiClient.interceptors.request.use(
-  (config) => {
-    console.log(`🔄 Requête API: ${config.method.toUpperCase()} ${config.url}`, config.data);
-    return config;
-  },
-  (error) => {
-    console.error('❌ Erreur lors de la préparation de la requête:', error);
-    return Promise.reject(error);
-  }
-);
-
-apiClient.interceptors.response.use(
-  (response) => {
-    console.log(`✅ Réponse API reçue: ${response.status}`, response.data);
-    return response;
-  },
-  (error) => {
-    console.error('❌ Erreur de réponse API:', error.response || error.message || error);
-    return Promise.reject(error);
-  }
-);
+import { themeService } from '../services/api';
 
 const Tasks = () => {
   const [tasks, setTasks] = useState([]);
@@ -60,98 +33,16 @@ const Tasks = () => {
     setIsLoading(true);
     setError(null);
     try {
-      // Essayer de récupérer les tâches depuis le backend
-      const response = await apiClient.get('/tasks');
-      setTasks(response.data.tasks || []);
+      const response = await fetch('/api/tasks');
+      if (response.ok) {
+        const data = await response.json();
+        setTasks(data.tasks || []);
+      } else {
+        throw new Error('Erreur lors du chargement');
+      }
     } catch (err) {
-      console.error('Erreur lors de la récupération des tâches:', err);
-      setError('Erreur lors du chargement des tâches. Utilisation de données locales.');
-      
-      // Fallback sur les données mockées en cas d'erreur
-      const mockTasks = [
-        { 
-          id: 1, 
-          title: 'Écrire le script de la vidéo "Comment fonctionne ChatGPT"', 
-          completed: false, 
-          category: 'Vidéo', 
-          deadline: '21 avril 2025',
-          priority: 'high'
-        },
-        { 
-          id: 2, 
-          title: 'Trier les papiers administratifs avant le déménagement', 
-          completed: false, 
-          category: 'Organisation', 
-          deadline: '22 avril 2025',
-          priority: 'medium'
-        },
-        { 
-          id: 3, 
-          title: 'Publier une newsletter sur les actualités IA', 
-          completed: false, 
-          category: 'Productivité', 
-          deadline: '23 avril 2025',
-          priority: 'medium'
-        },
-        { 
-          id: 4, 
-          title: 'Mettre à jour la fiche Notion du module N8N', 
-          completed: false, 
-          category: 'Travailler', 
-          deadline: '24 avril 2025',
-          priority: 'low'
-        },
-        { 
-          id: 5, 
-          title: 'Tourner la vidéo "Créer un agent IA sans coder"', 
-          completed: false, 
-          category: 'Vidéo', 
-          deadline: '25 avril 2025',
-          priority: 'high'
-        },
-        { 
-          id: 6, 
-          title: 'Planifier la rétro de la semaine', 
-          completed: false, 
-          category: 'Productivité', 
-          deadline: '27 avril 2025',
-          priority: 'medium'
-        },
-        { 
-          id: 7, 
-          title: 'Préparer les slides pour le live Discord', 
-          completed: false, 
-          category: 'Travailler', 
-          deadline: '28 avril 2025',
-          priority: 'medium'
-        },
-        { 
-          id: 8, 
-          title: 'Faire le point sur les habitudes de sommeil', 
-          completed: false, 
-          category: 'Suivi personnel', 
-          deadline: '29 avril 2025',
-          priority: 'low'
-        },
-        { 
-          id: 9, 
-          title: 'Ajouter une fonctionnalité "objectifs IA" à l\'app', 
-          completed: false, 
-          category: 'Productivité', 
-          deadline: '30 avril 2025',
-          priority: 'high'
-        },
-        { 
-          id: 10, 
-          title: 'Relancer les utilisateurs inactifs avec un e-mail IA', 
-          completed: false, 
-          category: 'Automatisation', 
-          deadline: '01 mai 2025',
-          priority: 'medium'
-        }
-      ];
-      
-      setTasks(mockTasks);
+      setError('Erreur lors du chargement des tâches.');
+      setTasks([]);
     } finally {
       setIsLoading(false);
     }
@@ -159,36 +50,52 @@ const Tasks = () => {
 
   const toggleTaskCompletion = async (taskId) => {
     try {
-      // Mettre à jour localement d'abord pour une UX réactive
       const taskToUpdate = tasks.find(t => t.id === taskId);
       if (!taskToUpdate) return;
       
-      const updatedTasks = tasks.map(task => 
-        task.id === taskId ? { ...task, completed: !task.completed } : task
-      );
-      setTasks(updatedTasks);
-      
-      // Puis mettre à jour dans le backend
-      await apiClient.put(`/tasks/${taskId}`, { 
-        completed: !taskToUpdate.completed 
+      const response = await fetch(`/api/tasks/${taskId}/complete`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ completed: !taskToUpdate.completed }),
       });
+
+      if (response.ok) {
+        fetchTasks(); // Recharger les tâches
+      }
     } catch (err) {
-      console.error('Erreur lors de la mise à jour de la tâche:', err);
-      // En cas d'erreur, on revient à l'état précédent
+      console.error('Erreur lors de la mise à jour:', err);
       fetchTasks();
     }
   };
 
   const deleteTask = async (taskId) => {
     try {
-      // Supprimer localement d'abord
-      setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
-      
-      // Puis supprimer du backend
-      await apiClient.delete(`/tasks/${taskId}`);
+      const response = await fetch(`/api/tasks/${taskId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        fetchTasks(); // Recharger les tâches
+      }
     } catch (err) {
-      console.error('Erreur lors de la suppression de la tâche:', err);
-      // En cas d'erreur, on récupère toutes les tâches à nouveau
+      console.error('Erreur lors de la suppression:', err);
+      fetchTasks();
+    }
+  };
+
+  const addTask = async (taskData) => {
+    try {
+      const response = await fetch('/api/tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(taskData),
+      });
+
+      if (response.ok) {
+        fetchTasks(); // Recharger les tâches
+      }
+    } catch (err) {
+      console.error('Erreur lors de la création:', err);
       fetchTasks();
     }
   };
@@ -226,19 +133,7 @@ const Tasks = () => {
       setIsLoading(true);
       
       // Envoyer la nouvelle tâche au backend
-      const response = await apiClient.post('/tasks', taskData);
-      
-      // Ajouter la tâche retournée par le backend à notre liste locale
-      if (response.data && response.data.task) {
-        setTasks(prevTasks => [...prevTasks, response.data.task]);
-      } else {
-        // Fallback si le backend ne retourne pas la tâche créée
-        const newTaskWithId = {
-          ...taskData,
-          id: Date.now() // Générer un ID temporaire
-        };
-        setTasks(prevTasks => [...prevTasks, newTaskWithId]);
-      }
+      await addTask(taskData);
       
       // Réinitialiser le formulaire et fermer le modal
       setNewTask({
@@ -276,10 +171,7 @@ const Tasks = () => {
     setError(null);
     
     try {
-      const response = await apiClient.post('/generate', { 
-        theme,
-        is_smart_objective: true // Générer des tâches structurées
-      });
+      const response = await themeService.generateTasks(theme);
       
       if (response.data && response.data.tasks) {
         setGeneratedTasks(response.data.tasks);
@@ -320,18 +212,12 @@ const Tasks = () => {
       setIsLoading(true);
       
       // Envoyer la tâche au backend
-      const response = await apiClient.post('/tasks', taskData);
+      await addTask(taskData);
       
-      if (response.data && response.data.task) {
-        setTasks(prevTasks => [...prevTasks, response.data.task]);
-        
-        // Retirer la tâche de la liste des tâches générées
-        setGeneratedTasks(prev => prev.filter(t => t.id !== task.id));
-        
-        alert('Tâche ajoutée avec succès !');
-      } else {
-        throw new Error('Erreur lors de l\'ajout de la tâche');
-      }
+      // Retirer la tâche de la liste des tâches générées
+      setGeneratedTasks(prev => prev.filter(t => t.id !== task.id));
+      
+      alert('Tâche ajoutée avec succès !');
     } catch (err) {
       console.error('Erreur lors de l\'ajout de la tâche générée:', err);
       alert('Erreur lors de l\'ajout de la tâche. Veuillez réessayer.');

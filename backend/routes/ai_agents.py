@@ -1,14 +1,14 @@
 """
 Routes pour les agents IA, conversations et messages.
 """
-from fastapi import APIRouter, HTTPException, Depends, status
-from typing import List, Optional, Dict, Any
+from fastapi import APIRouter, HTTPException, status
+from typing import Dict, Any, Optional
 import logging
 import uuid
 import os
 from datetime import datetime
 from pydantic import BaseModel
-from loguru import logger
+from openai import OpenAI
 
 from services.supabase_service import supabase_service
 from services.llm_service import generate_response
@@ -26,6 +26,19 @@ AVAILABLE_MODELS = [
     {"id": "gpt-4.1-2025-04-14", "name": "GPT-4.1 Turbo", "description": "Nouvelle version plus performante"},
     {"id": "o3-2025-04-16", "name": "o3-2025-04-16", "description": "Modèle personnalisé"}
 ]
+
+# Modèles Pydantic pour la génération de tâches
+class TaskGenerationRequest(BaseModel):
+    user_id: str
+    context: Optional[Dict[str, Any]] = None
+    preferences: Optional[Dict[str, Any]] = None
+    model: Optional[str] = "gpt-3.5-turbo"
+
+class TaskRecommendationRequest(BaseModel):
+    user_id: str
+    completed_task_id: str
+    context: Optional[Dict[str, Any]] = None
+    model: Optional[str] = "gpt-3.5-turbo"
 
 # Route pour récupérer les modèles disponibles
 @router.get("/models", status_code=status.HTTP_200_OK)
@@ -267,4 +280,114 @@ async def get_conversation_messages(conversation_id: str):
         raise HTTPException(status_code=404, detail=f"Conversation {conversation_id} non trouvée")
     
     messages = await supabase_service.get_messages_by_conversation(conversation_id)
-    return {"messages": messages} 
+    return {"messages": messages}
+
+# Nouvelle route pour la génération de tâches IA
+@router.post("/generate-tasks", tags=["AI Agents"])
+async def generate_smart_tasks(request: TaskGenerationRequest):
+    """Génère des tâches SMART basées sur le contexte et les préférences de l'utilisateur"""
+    try:
+        # Récupérer l'historique des tâches de l'utilisateur
+        user_tasks = await supabase_service.get_user_tasks(request.user_id)
+        user_habits = await supabase_service.get_user_habits(request.user_id)
+        
+        # Préparer le contexte pour l'IA
+        context = {
+            "user_tasks": user_tasks,
+            "user_habits": user_habits,
+            "preferences": request.preferences or {},
+            "context": request.context or {}
+        }
+        
+        # Utiliser OpenAI pour générer des tâches SMART
+        client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+        
+        response = client.chat.completions.create(
+            model=request.model,
+            messages=[
+                {"role": "system", "content": """Tu es un assistant de productivité qui génère des tâches SMART.
+                Génère 3-5 tâches SMART (Spécifiques, Mesurables, Atteignables, Réalistes, Temporellement définies)
+                basées sur le contexte et les préférences de l'utilisateur.
+                
+                Réponds au format JSON avec:
+                {
+                    "tasks": [
+                        {
+                            "title": "Titre de la tâche",
+                            "description": "Description détaillée",
+                            "category": "catégorie",
+                            "estimated_time": "durée estimée",
+                            "deadline": "date limite",
+                            "priority": "priorité (high/medium/low)",
+                            "smart_criteria": {
+                                "specific": "critère spécifique",
+                                "measurable": "critère mesurable",
+                                "achievable": "critère atteignable",
+                                "relevant": "critère réaliste",
+                                "time_bound": "critère temporel"
+                            }
+                        }
+                    ]
+                }"""},
+                {"role": "user", "content": f"Contexte: {context}"}
+            ],
+            temperature=0.7
+        )
+        
+        # Extraire et valider la réponse
+        tasks = response.choices[0].message.content
+        # Sauvegarder les tâches générées
+        saved_tasks = await supabase_service.save_generated_tasks(request.user_id, tasks)
+        
+        return {"tasks": saved_tasks}
+        
+    except Exception as e:
+        logger.error(f"Erreur lors de la génération des tâches: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la génération des tâches: {str(e)}")
+
+# Nouvelle route pour les recommandations de tâches
+@router.post("/recommend-next-task", tags=["AI Agents"])
+async def recommend_next_task(request: TaskRecommendationRequest):
+    """Recommande la prochaine tâche à faire après avoir complété une tâche"""
+    try:
+        # Récupérer la tâche complétée
+        completed_task = await supabase_service.get_task_by_id(request.completed_task_id)
+        if not completed_task:
+            raise HTTPException(status_code=404, detail="Tâche non trouvée")
+            
+        # Récupérer les tâches en attente de l'utilisateur
+        pending_tasks = await supabase_service.get_user_pending_tasks(request.user_id)
+        
+        # Utiliser OpenAI pour recommander la prochaine tâche
+        client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+        
+        response = client.chat.completions.create(
+            model=request.model,
+            messages=[
+                {"role": "system", "content": """Tu es un assistant de productivité qui recommande la prochaine tâche à faire.
+                Analyse la tâche complétée et les tâches en attente pour recommander la meilleure tâche suivante.
+                
+                Réponds au format JSON avec:
+                {
+                    "recommended_task": {
+                        "task_id": "ID de la tâche recommandée",
+                        "reason": "Explication de pourquoi cette tâche est recommandée maintenant"
+                    },
+                    "alternative_tasks": [
+                        {
+                            "task_id": "ID de la tâche alternative",
+                            "reason": "Explication de pourquoi cette tâche pourrait être une alternative"
+                        }
+                    ]
+                }"""},
+                {"role": "user", "content": f"Tâche complétée: {completed_task}\nTâches en attente: {pending_tasks}\nContexte: {request.context}"}
+            ],
+            temperature=0.7
+        )
+        
+        recommendation = response.choices[0].message.content
+        return {"recommendation": recommendation}
+        
+    except Exception as e:
+        logger.error(f"Erreur lors de la recommandation de tâche: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la recommandation: {str(e)}") 

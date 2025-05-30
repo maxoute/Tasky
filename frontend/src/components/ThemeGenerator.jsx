@@ -24,6 +24,24 @@ const ThemeGenerator = ({ onTasksGenerated }) => {
       return;
     }
     
+    // Découpage multi-tâches
+    const splitThemes = theme.split(/[,;\n]+/).map(t => t.trim()).filter(Boolean);
+    if (splitThemes.length > 1) {
+      const today = new Date().toISOString().split('T')[0];
+      const multiTasks = splitThemes.map((t, i) => ({
+        id: `local-multi-${i}`,
+        text: t,
+        deadline: today,
+        completed: false,
+      }));
+      onTasksGenerated(theme, multiTasks);
+      setTheme('');
+      setShowAdvanced(false);
+      setDeadline('');
+      setCategory('');
+      return;
+    }
+    
     try {
       setIsLoading(true);
       setError('');
@@ -65,12 +83,13 @@ const ThemeGenerator = ({ onTasksGenerated }) => {
         setCategory('');
       } else {
         // En cas d'erreur, utiliser des tâches génériques avec les options avancées
+        const today = new Date().toISOString().split('T')[0];
         const fallbackTasks = [
           { 
             id: 'local-1', 
             text: `Rechercher sur "${theme}"`, 
             completed: false,
-            ...(deadline && { deadline }),
+            deadline: today,
             ...(category && { 
               category,
               hashtags: [category.toLowerCase(), "recherche"]
@@ -80,7 +99,7 @@ const ThemeGenerator = ({ onTasksGenerated }) => {
             id: 'local-2', 
             text: `Créer un plan pour "${theme}"`, 
             completed: false,
-            ...(deadline && { deadline }),
+            deadline: today,
             ...(category && { 
               category,
               hashtags: [category.toLowerCase(), "planification"]
@@ -90,7 +109,7 @@ const ThemeGenerator = ({ onTasksGenerated }) => {
             id: 'local-3', 
             text: `Prendre des notes sur "${theme}"`, 
             completed: false,
-            ...(deadline && { deadline }),
+            deadline: today,
             ...(category && { 
               category,
               hashtags: [category.toLowerCase(), "documentation"]
@@ -109,12 +128,13 @@ const ThemeGenerator = ({ onTasksGenerated }) => {
       setError('Erreur lors de la génération des tâches. Veuillez réessayer.');
       
       // Même en cas d'erreur, générer des tâches localement avec les options avancées
+      const today = new Date().toISOString().split('T')[0];
       const fallbackTasks = [
         { 
           id: 'error-1', 
           text: `Rechercher sur "${theme}"`, 
           completed: false,
-          ...(deadline && { deadline }),
+          deadline: today,
           ...(category && { 
             category,
             hashtags: [category.toLowerCase(), "recherche"]
@@ -124,7 +144,7 @@ const ThemeGenerator = ({ onTasksGenerated }) => {
           id: 'error-2', 
           text: `Créer un plan pour "${theme}"`, 
           completed: false,
-          ...(deadline && { deadline }),
+          deadline: today,
           ...(category && { 
             category,
             hashtags: [category.toLowerCase(), "planification"]

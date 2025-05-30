@@ -7,6 +7,7 @@ from supabase import create_client, Client
 from dotenv import load_dotenv
 import logging
 from datetime import datetime
+from typing import Dict, Any, List, Optional
 
 # Configuration du logging
 logging.basicConfig(level=logging.INFO)
@@ -14,6 +15,16 @@ logger = logging.getLogger(__name__)
 
 # Chargement des variables d'environnement
 load_dotenv()
+
+# Initialisation du client Supabase
+supabase_url = os.environ.get("SUPABASE_URL")
+supabase_key = os.environ.get("SUPABASE_KEY")
+
+if not supabase_url or not supabase_key:
+    logger.warning("Les variables d'environnement SUPABASE_URL et SUPABASE_KEY ne sont pas définies")
+    supabase = None
+else:
+    supabase = create_client(supabase_url, supabase_key)
 
 
 class SupabaseService:
@@ -656,6 +667,106 @@ class SupabaseService:
         except Exception as e:
             logger.error(f"Erreur lors de la suppression de la tâche {task_id}: {str(e)}")
             return False
+
+    async def get_user_habits(self, user_id: str) -> List[Dict[str, Any]]:
+        """Récupère toutes les habitudes d'un utilisateur"""
+        try:
+            if not supabase:
+                raise Exception("Supabase n'est pas configuré")
+            
+            response = supabase.table('habits').select('*').eq('user_id', user_id).execute()
+            return response.data
+        except Exception as e:
+            logger.error(f"Erreur lors de la récupération des habitudes: {str(e)}")
+            raise
+    
+    async def get_habit_by_id(self, habit_id: int) -> Optional[Dict[str, Any]]:
+        """Récupère une habitude par son ID"""
+        try:
+            if not supabase:
+                raise Exception("Supabase n'est pas configuré")
+            
+            response = supabase.table('habits').select('*').eq('id', habit_id).execute()
+            return response.data[0] if response.data else None
+        except Exception as e:
+            logger.error(f"Erreur lors de la récupération de l'habitude {habit_id}: {str(e)}")
+            raise
+    
+    async def add_habit(self, habit_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Ajoute une nouvelle habitude"""
+        try:
+            if not supabase:
+                raise Exception("Supabase n'est pas configuré")
+            
+            response = supabase.table('habits').insert(habit_data).execute()
+            return response.data[0] if response.data else None
+        except Exception as e:
+            logger.error(f"Erreur lors de l'ajout de l'habitude: {str(e)}")
+            raise
+    
+    async def update_habit(self, habit_id: int, habit_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Met à jour une habitude existante"""
+        try:
+            if not supabase:
+                raise Exception("Supabase n'est pas configuré")
+            
+            response = supabase.table('habits').update(habit_data).eq('id', habit_id).execute()
+            return response.data[0] if response.data else None
+        except Exception as e:
+            logger.error(f"Erreur lors de la mise à jour de l'habitude {habit_id}: {str(e)}")
+            raise
+    
+    async def delete_habit(self, habit_id: int) -> bool:
+        """Supprime une habitude"""
+        try:
+            if not supabase:
+                raise Exception("Supabase n'est pas configuré")
+            
+            # Supprimer d'abord les complétions associées
+            await self.delete_habit_completions(habit_id)
+            
+            # Puis supprimer l'habitude
+            response = supabase.table('habits').delete().eq('id', habit_id).execute()
+            return len(response.data) > 0
+        except Exception as e:
+            logger.error(f"Erreur lors de la suppression de l'habitude {habit_id}: {str(e)}")
+            raise
+    
+    async def get_habit_completions(self, habit_id: int) -> List[Dict[str, Any]]:
+        """Récupère toutes les complétions d'une habitude"""
+        try:
+            if not supabase:
+                raise Exception("Supabase n'est pas configuré")
+            
+            response = supabase.table('habit_completions').select('*').eq('habit_id', habit_id).execute()
+            return response.data
+        except Exception as e:
+            logger.error(f"Erreur lors de la récupération des complétions pour l'habitude {habit_id}: {str(e)}")
+            raise
+    
+    async def add_habit_completion(self, completion_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Ajoute une nouvelle complétion d'habitude"""
+        try:
+            if not supabase:
+                raise Exception("Supabase n'est pas configuré")
+            
+            response = supabase.table('habit_completions').insert(completion_data).execute()
+            return response.data[0] if response.data else None
+        except Exception as e:
+            logger.error(f"Erreur lors de l'ajout de la complétion: {str(e)}")
+            raise
+    
+    async def delete_habit_completions(self, habit_id: int) -> bool:
+        """Supprime toutes les complétions d'une habitude"""
+        try:
+            if not supabase:
+                raise Exception("Supabase n'est pas configuré")
+            
+            response = supabase.table('habit_completions').delete().eq('habit_id', habit_id).execute()
+            return len(response.data) > 0
+        except Exception as e:
+            logger.error(f"Erreur lors de la suppression des complétions pour l'habitude {habit_id}: {str(e)}")
+            raise
 
 
 # Créer une instance unique du service

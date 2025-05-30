@@ -1,22 +1,21 @@
 import os
-from fastapi import FastAPI, HTTPException, Request, Depends
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
-from pydantic import BaseModel, EmailStr
-from typing import List, Optional
+from pydantic import BaseModel
+from typing import List
 from dotenv import load_dotenv
 import logging
-import sys
-from pathlib import Path
 from routes import todos, habits, analytics, smart, ai_agents
-from datetime import datetime, timedelta
-from jose import JWTError, jwt
+# from routes import google_calendar  # Commenté temporairement
+from datetime import datetime
 from passlib.context import CryptContext
 from prometheus_client import Counter, Histogram
 import time
 import sentry_sdk
+from supabase_service import add_task
 
 # Configuration de Sentry
 sentry_sdk.init(
@@ -72,15 +71,12 @@ async def metrics_middleware(request: Request, call_next):
     start_time = time.time()
     response = await call_next(request)
     duration = time.time() - start_time
-    
     REQUEST_COUNT.labels(
         method=request.method,
         endpoint=request.url.path,
         status=response.status_code
     ).inc()
-    
     REQUEST_LATENCY.observe(duration)
-    
     return response
 
 # Modèles Pydantic
@@ -120,20 +116,16 @@ async def health_check():
 @app.post("/api/tasks", response_model=Task)
 async def create_task(task: TaskCreate):
     try:
-        # Logique de création de tâche
-        return {"message": "Tâche créée avec succès"}
+        task_data = task.dict()
+        if "user_id" not in task_data:
+            task_data["user_id"] = "test_user"
+        created_task = add_task(task_data)
+        if not created_task:
+            raise HTTPException(status_code=500, detail="Erreur lors de la création de la tâche")
+        return created_task
     except Exception as e:
         logger.error(f"Erreur lors de la création de la tâche: {str(e)}")
         raise HTTPException(status_code=500, detail="Erreur lors de la création de la tâche")
-
-@app.get("/api/tasks", response_model=List[Task])
-async def get_tasks():
-    try:
-        # Logique de récupération des tâches
-        return []
-    except Exception as e:
-        logger.error(f"Erreur lors de la récupération des tâches: {str(e)}")
-        raise HTTPException(status_code=500, detail="Erreur lors de la récupération des tâches")
 
 # Inclusion des différents modules de routes avec préfixe /api
 app.include_router(todos.router, prefix="/api", tags=["Todos"])
@@ -141,13 +133,15 @@ app.include_router(habits.router, prefix="/api", tags=["Habits"])
 app.include_router(analytics.router, prefix="/api", tags=["Analytics"])
 app.include_router(smart.router, prefix="/api", tags=["SMART"])
 app.include_router(ai_agents.router, prefix="/api", tags=["AI Agents"])
+# app.include_router(google_calendar.router)  # Commenté temporairement
 
-# Chemin vers le build React
-react_build_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'frontend/build')
-
-# Montage des fichiers statiques si le dossier existe
-if os.path.exists(react_build_path):
-    app.mount("/static", StaticFiles(directory=f"{react_build_path}/static"), name="static")
+# Montage des fichiers statiques de Vite
+vite_dist_path = os.path.abspath("../frontend/dist")
+if os.path.exists(f"{vite_dist_path}/assets"):
+    app.mount("/assets", StaticFiles(directory=f"{vite_dist_path}/assets"), name="assets")
+    logger.info(f"Fichiers statiques montés depuis {vite_dist_path}/assets")
+else:
+    logger.warning(f"Dossier {vite_dist_path}/assets non trouvé. Les fichiers statiques ne seront pas servis.")
 
 # Route par défaut pour servir l'application React (doit être la dernière route)
 @app.get("/{path:path}")
@@ -156,21 +150,20 @@ async def serve_react(path: str = ""):
     # Ne pas traiter les routes /api ici
     if path.startswith("api"):
         return {"detail": "Not Found"}
-        
-    # Vérifier si le chemin existe dans le dossier static
-    full_path = os.path.join(react_build_path, path)
     
-    # Si le chemin est un fichier qui existe, le servir
-    if os.path.isfile(full_path):
-        return FileResponse(full_path)
+    # Vérifier d'abord dans le dossier dist (Vite)
+    vite_path = os.path.join(vite_dist_path, path)
+    if os.path.isfile(vite_path):
+        return FileResponse(vite_path)
     
-    # Sinon, servir index.html pour permettre le routage côté client
-    index_path = os.path.join(react_build_path, "index.html")
+    # Si le chemin n'existe pas, servir index.html pour permettre le routage côté client
+    # D'abord vérifier dans dist
+    index_path = os.path.join(vite_dist_path, "index.html")
     if os.path.isfile(index_path):
         return FileResponse(index_path)
     
-    # Si index.html n'existe pas, simplement retourner un message
-    return {"message": "L'application React n'est pas encore construite. Exécutez `npm run build` dans le dossier frontend."}
+    # Si aucun index.html n'existe, retourner un message
+    return {"message": "L'application frontend n'est pas encore construite. Exécutez `npm run build` dans le dossier frontend."}
 
 # Point d'entrée pour Uvicorn
 if __name__ == "__main__":

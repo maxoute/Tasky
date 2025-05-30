@@ -108,7 +108,7 @@ fi
 # Afficher les ports
 log_info "Services déployés avec succès !"
 echo
-echo "📱 Frontend: http://$(hostname -I | awk '{print $1}'):3001"
+echo "📱 Frontend: http://$(hostname -I | awk '{print $1}'):3000"
 echo "🔧 Backend:  http://$(hostname -I | awk '{print $1}'):8000"
 echo "📊 API Docs: http://$(hostname -I | awk '{print $1}'):8000/docs"
 echo

@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 
-const Sidebar = ({ onThemeSelect, popularThemes = [], recentThemes = [] }) => {
+const Sidebar = ({ onThemeSelect, popularThemes = [], recentThemes = [], collapsed, setCollapsed }) => {
   const location = useLocation();
-  const [collapsed, setCollapsed] = useState(false);
   const [showThemes, setShowThemes] = useState(false);
   
   const toggleSidebar = () => {
@@ -88,10 +87,8 @@ const Sidebar = ({ onThemeSelect, popularThemes = [], recentThemes = [] }) => {
 
   return (
     <div 
-      className={`sidebar ${collapsed ? 'w-16' : 'w-64'}`}
-      style={{
-        transition: 'width 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-      }}
+      className={`sidebar bg-gray-900 text-white shadow-lg h-full z-40 ${collapsed ? 'w-16' : 'w-64'}`}
+      style={{ transition: 'width 0.3s cubic-bezier(0.16, 1, 0.3, 1)' }}
     >
       <div className="p-4 flex items-center justify-between border-b border-gray-700">
         {!collapsed && (
@@ -120,7 +117,6 @@ const Sidebar = ({ onThemeSelect, popularThemes = [], recentThemes = [] }) => {
           </svg>
         </button>
       </div>
-
       <div className="py-6">
         {navItems.map((item) => (
           <NavLink
@@ -137,7 +133,6 @@ const Sidebar = ({ onThemeSelect, popularThemes = [], recentThemes = [] }) => {
             )}
           </NavLink>
         ))}
-
         {!collapsed && onThemeSelect && (
           <div className="mt-4 mx-2">
             <button
@@ -163,7 +158,6 @@ const Sidebar = ({ onThemeSelect, popularThemes = [], recentThemes = [] }) => {
                 <polyline points="6 9 12 15 18 9"></polyline>
               </svg>
             </button>
-
             {showThemes && (
               <div className="py-1 pl-10 pr-2 space-y-1 animate-fadeInUp">
                 {recentThemes.length > 0 && (
@@ -180,7 +174,6 @@ const Sidebar = ({ onThemeSelect, popularThemes = [], recentThemes = [] }) => {
                     ))}
                   </>
                 )}
-                
                 {popularThemes.length > 0 && (
                   <>
                     <p className="text-xs text-gray-400 uppercase mt-3 mb-1">Populaires</p>
@@ -200,10 +193,9 @@ const Sidebar = ({ onThemeSelect, popularThemes = [], recentThemes = [] }) => {
           </div>
         )}
       </div>
-
       <div className="absolute bottom-0 left-0 right-0 p-4">
         <div className={`flex ${collapsed ? 'justify-center' : 'justify-between'} items-center`}>
-          {!collapsed && <span className="text-xs text-gray-400">v1.0.2</span>}
+          {!collapsed && <span className="text-xs text-gray-400">v1.0.3</span>}
           <div className="flex items-center">
             <button className="p-1 rounded-full hover:bg-gray-700 transition-colors">
               <svg 

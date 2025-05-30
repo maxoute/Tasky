@@ -8,12 +8,12 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # Configuration de l'environnement
-ENV_FILE=".env"
+ENV_FILE="/Users/maxens/Desktop/github-projects/Mentor IA/.env"
 BACKEND_DIR="./backend"
 FRONTEND_DIR="./frontend"
 PID_FILE=".app_pids"
 LOGS_DIR="./logs"
-MAX_LOG_SIZE=100M
+MAX_LOG_SIZE=104857600  # 100 Mo en octets
 MAX_LOG_FILES=5
 BACKUP_DIR="./backups"
 HOST="0.0.0.0"  # Écouter sur toutes les interfaces
@@ -85,15 +85,24 @@ monitor_resources() {
   local service=$2
   
   while kill -0 $pid 2>/dev/null; do
-    local cpu_usage=$(ps -p $pid -o %cpu | tail -n 1)
-    local mem_usage=$(ps -p $pid -o %mem | tail -n 1)
+    local cpu_usage=$(ps -p $pid -o %cpu | tail -n 1 | tr -d '[:space:]')
+    local mem_usage=$(ps -p $pid -o %mem | tail -n 1 | tr -d '[:space:]')
     
-    if (( $(echo "$cpu_usage > 80" | bc -l) )); then
-      log_message "AVERTISSEMENT" "$service: Utilisation CPU élevée ($cpu_usage%)"
+    # Remplacer virgule par point (macOS)
+    cpu_usage=${cpu_usage//,/.}
+    mem_usage=${mem_usage//,/.}
+    
+    # Vérifier que c'est bien un nombre
+    if [[ $cpu_usage =~ ^[0-9]+([.][0-9]+)?$ ]]; then
+      if (( $(echo "$cpu_usage > 80" | bc -l) )); then
+        log_message "AVERTISSEMENT" "$service: Utilisation CPU élevée ($cpu_usage%)"
+      fi
     fi
     
-    if (( $(echo "$mem_usage > 80" | bc -l) )); then
-      log_message "AVERTISSEMENT" "$service: Utilisation mémoire élevée ($mem_usage%)"
+    if [[ $mem_usage =~ ^[0-9]+([.][0-9]+)?$ ]]; then
+      if (( $(echo "$mem_usage > 80" | bc -l) )); then
+        log_message "AVERTISSEMENT" "$service: Utilisation mémoire élevée ($mem_usage%)"
+      fi
     fi
     
     sleep 60
@@ -111,7 +120,7 @@ log_message() {
   local message=$2
   local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
   echo -e "[$timestamp] [$level] $message" >> "$LOGS_DIR/app.log"
-  echo -e "${BLUE}[$level]${NC} $message"
+  echo -e "${BLUE}[$level]${NC} $message\n"
 }
 
 # Fonction pour vérifier les dépendances
@@ -218,7 +227,7 @@ start_frontend() {
   check_dependencies
   rotate_logs "$LOGS_DIR/frontend.log"
   cd $FRONTEND_DIR
-  NODE_ENV=development npm start > ../logs/frontend.log 2>&1 &
+  NODE_ENV=development npm run dev > ../logs/frontend.log 2>&1 &
   FRONTEND_PID=$!
   cd ..
   monitor_resources $FRONTEND_PID "Frontend" &
@@ -264,6 +273,19 @@ stop_services() {
   else
     log_message "AVERTISSEMENT" "Aucun service en cours d'exécution"
   fi
+
+  # Kill forcé de tous les processus récalcitrants liés à l'app
+  pkill -f 'uvicorn'
+  pkill -f 'vite'
+  pkill -f 'npm run dev'
+  pkill -f 'esbuild'
+  pkill -f 'node /Users/maxens/Desktop/github-projects/Mentor IA/frontend/node_modules/.bin/vite'
+
+  echo -e "${YELLOW}----------------------${NC}"
+  echo ""
+  log_message "OK" "Tous les processus liés à l'app (uvicorn, vite, npm, esbuild, node) ont été tués."
+  echo ""
+  echo -e "${YELLOW}----------------------${NC}"
 }
 
 # Fonction pour vérifier le statut des services
@@ -289,6 +311,12 @@ check_status() {
 # Traiter les arguments
 case "$1" in
   start)
+    # Nettoyage préventif avant de démarrer
+    pkill -f 'uvicorn'
+    pkill -f 'vite'
+    pkill -f 'npm run dev'
+    pkill -f 'esbuild'
+    pkill -f 'node /Users/maxens/Desktop/github-projects/Mentor IA/frontend/node_modules/.bin/vite'
     load_env
     cleanup_old_pids
     check_dependencies

@@ -16,10 +16,6 @@ if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_KEY" ]; then
   exit 1
 fi
 
-# Nettoyage des anciens builds
-echo "Nettoyage des anciens builds..."
-rm -rf frontend/build
-rm -rf backend/static/*
 
 # Installation des dépendances backend
 echo "Installation des dépendances backend..."

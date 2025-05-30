@@ -41,6 +41,25 @@ class Task(TaskBase):
     class Config:
         orm_mode = True
 
+# Modèle flexible pour les données de la DB (sans validation stricte)
+class TaskDB(BaseModel):
+    id: int
+    title: Optional[str] = None
+    text: Optional[str] = None
+    theme: Optional[str] = None
+    hashtags: Optional[List[str]] = None
+    eisenhower: Optional[str] = None
+    estimated_time: Optional[str] = None
+    deadline: Optional[str] = None
+    category: Optional[str] = None
+    priority: Optional[str] = "medium"
+    completed: Optional[bool] = False
+    user_id: Optional[str] = None
+    created_at: Optional[str] = None
+    
+    class Config:
+        orm_mode = True
+
 # Catégories de tâches
 CATEGORIES = [
     "personnel", "professionnel", "santé", "finance", 
@@ -54,14 +73,45 @@ CATEGORIES = [
 async def get_categories():
     return {"categories": CATEGORIES}
 
-# API pour récupérer toutes les tâches
-@router.get("/tasks", response_model=Dict[str, List[Task]])
-async def get_all_tasks():
+# API pour récupérer toutes les tâches (route de test)
+@router.get("/tasks-all")
+async def get_all_tasks_test():
     try:
+        logger.info("🔄 Route test /tasks-all")
         tasks = await supabase_service.get_all_tasks()
+        logger.info(f"✅ Récupéré {len(tasks)} tâches")
         return {"tasks": tasks}
     except Exception as e:
-        logger.error(f"Erreur lors de la récupération des tâches: {str(e)}")
+        logger.error(f"❌ Erreur: {str(e)}")
+        import traceback
+        logger.error(f"❌ Traceback: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Erreur interne: {str(e)}")
+
+# API pour récupérer toutes les tâches
+@router.get("/tasks")
+async def get_all_tasks():
+    logger.info("🔥 === DÉBUT GET /api/tasks ===")
+    try:
+        logger.info("🔄 Appel supabase_service.get_all_tasks()...")
+        tasks = await supabase_service.get_all_tasks()
+        logger.info(f"✅ Récupéré {len(tasks)} tâches depuis Supabase")
+        
+        # Afficher un aperçu des tâches
+        for i, task in enumerate(tasks[:3]):  # Limiter à 3 pour les logs
+            logger.info(f"  📋 Tâche {i+1}: ID={task.get('id')}, text='{task.get('text', '')[:50]}...'")
+        
+        logger.info("🔄 Création de la réponse JSON...")
+        response = {"tasks": tasks}
+        logger.info(f"✅ Response créée avec {len(tasks)} tâches")
+        logger.info("🔥 === FIN GET /api/tasks (SUCCÈS) ===")
+        
+        return response
+    except Exception as e:
+        logger.error(f"❌ === ERREUR GET /api/tasks ===")
+        logger.error(f"❌ Erreur: {str(e)}")
+        import traceback
+        logger.error(f"❌ Traceback: {traceback.format_exc()}")
+        logger.error(f"❌ === FIN GET /api/tasks (ERREUR) ===")
         raise HTTPException(status_code=500, detail=f"Erreur interne: {str(e)}")
 
 # API pour créer une nouvelle tâche
@@ -98,30 +148,74 @@ async def get_task(task_id: int = Path(..., title="ID de la tâche")):
         logger.error(f"Erreur lors de la récupération de la tâche {task_id}: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Erreur interne: {str(e)}")
 
+# API pour mettre à jour une tâche (route de test)
+@router.put("/tasks-update/{task_id}")
+async def update_task_test(
+    task_id: int,
+    data: Dict[str, Any] = Body(...)
+):
+    logger.info(f"🔄 === DÉBUT PUT /api/tasks-update/{task_id} ===")
+    try:
+        logger.info(f"🔄 Données reçues: {data}")
+        
+        if not data:
+            raise HTTPException(status_code=400, detail="Aucune donnée fournie")
+        
+        # Mettre à jour la tâche
+        logger.info(f"🔄 Appel supabase_service.update_task_by_id({task_id}, {data})")
+        updated_task = await supabase_service.update_task_by_id(task_id, data)
+        logger.info(f"✅ Tâche mise à jour: {updated_task}")
+        
+        if not updated_task:
+            raise HTTPException(status_code=404, detail=f"Tâche avec ID {task_id} non trouvée")
+        
+        logger.info(f"🔥 === FIN PUT /api/tasks-update/{task_id} (SUCCÈS) ===")
+        return {"task": updated_task}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ === ERREUR PUT /api/tasks-update/{task_id} ===")
+        logger.error(f"❌ Erreur: {str(e)}")
+        import traceback
+        logger.error(f"❌ Traceback: {traceback.format_exc()}")
+        logger.error(f"❌ === FIN PUT /api/tasks-update/{task_id} (ERREUR) ===")
+        raise HTTPException(status_code=500, detail=f"Erreur interne: {str(e)}")
+
 # API pour mettre à jour une tâche
 @router.put("/tasks/{task_id}", response_model=Dict[str, Task])
 async def update_task_by_id(
     updates: TaskUpdate,
     task_id: int = Path(..., title="ID de la tâche")
 ):
+    logger.info(f"🔄 === DÉBUT PUT /api/tasks/{task_id} ===")
     try:
+        logger.info(f"🔄 Données reçues: {updates}")
+        
         # Convertir le modèle Pydantic en dictionnaire, en excluant les None
         update_data = {k: v for k, v in updates.dict().items() if v is not None}
+        logger.info(f"🔄 Données filtrées: {update_data}")
         
         if not update_data:
             raise HTTPException(status_code=400, detail="Aucune donnée fournie pour la mise à jour")
         
         # Mettre à jour la tâche
+        logger.info(f"🔄 Appel supabase_service.update_task_by_id({task_id}, {update_data})")
         updated_task = await supabase_service.update_task_by_id(task_id, update_data)
+        logger.info(f"✅ Tâche mise à jour: {updated_task}")
         
         if not updated_task:
             raise HTTPException(status_code=404, detail=f"Tâche avec ID {task_id} non trouvée")
         
+        logger.info(f"🔥 === FIN PUT /api/tasks/{task_id} (SUCCÈS) ===")
         return {"task": updated_task}
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Erreur lors de la mise à jour de la tâche {task_id}: {str(e)}")
+        logger.error(f"❌ === ERREUR PUT /api/tasks/{task_id} ===")
+        logger.error(f"❌ Erreur: {str(e)}")
+        import traceback
+        logger.error(f"❌ Traceback: {traceback.format_exc()}")
+        logger.error(f"❌ === FIN PUT /api/tasks/{task_id} (ERREUR) ===")
         raise HTTPException(status_code=500, detail=f"Erreur interne: {str(e)}")
 
 # API pour supprimer une tâche
@@ -162,22 +256,32 @@ async def generate_simple_tasks(data: Dict[str, Any] = Body(...)):
 # API pour générer des tâches avec OpenAI
 @router.post("/generate")
 async def generate_tasks(data: Dict[str, Any] = Body(...)):
+    logger.info("🚀 === DÉBUT POST /api/generate ===")
     try:
         if not data:
             raise HTTPException(status_code=400, detail="Données invalides")
-            
+        
         theme = data.get("theme", "").strip()
+        logger.info(f"🎯 Thème reçu: '{theme}'")
         if not theme:
             raise HTTPException(status_code=400, detail="Veuillez spécifier un thème")
         
         is_smart_objective = data.get("is_smart_objective", False)
-            
+        logger.info(f"🧠 Mode SMART: {is_smart_objective}")
+        
+        # Détection multi-tâches (virgule, point-virgule, retour à la ligne)
+        split_themes = re.split(r"[,;\n]+", theme)
+        split_themes = [t.strip() for t in split_themes if t.strip()]
+        is_multi = len(split_themes) > 1
+        logger.info(f"📝 Multi-tâches détecté: {is_multi} ({len(split_themes)} thèmes)")
+        
         # Vérifier si le thème existe déjà
         existing_tasks = await supabase_service.get_tasks_by_theme(theme)
-        if existing_tasks and not is_smart_objective:
+        logger.info(f"🔍 Tâches existantes pour '{theme}': {len(existing_tasks)}")
+        if existing_tasks and not is_smart_objective and not is_multi:
+            logger.info("♻️ Retour des tâches existantes (pas de génération)")
             return {"theme": theme, "tasks": existing_tasks}
         
-        # Utiliser OpenAI pour générer des tâches
         client = OpenAI(
             api_key=os.environ.get("OPENAI_API_KEY"),
         )
@@ -203,7 +307,7 @@ async def generate_tasks(data: Dict[str, Any] = Body(...)):
                     Réponds avec un objet JSON contenant:
                     {
                         "smart_objective": {
-                            "title": "Titre reformulé de l'objectif",
+                            "title": "Titre reformulé de l'objectif en 3/4 mots",
                             "specific": "Explication de l'aspect spécifique",
                             "measurable": "Explication de l'aspect mesurable",
                             "achievable": "Explication de l'aspect atteignable",
@@ -213,25 +317,76 @@ async def generate_tasks(data: Dict[str, Any] = Body(...)):
                         "tasks": [
                             {
                                 "id": 1,
-                                "text": "Description de la tâche 1",
+                                "text": "Description de la tâche en 3/4 mots",
                                 "hashtags": ["catégorie1", "catégorie2"],
                                 "eisenhower": "important_urgent" | "important_not_urgent" | "not_important_urgent" | "not_important_not_urgent",
                                 "estimated_time": "45min",
                                 "deadline": "YYYY-MM-DD"
                             },
-                            // ... autres tâches
                         ]
                     }
                     """}
                 ],
-                temperature=0.7,
+                temperature=0.5,
             )
-        else:
-            # Générer une liste de tâches normales
+        elif is_multi:
+            # Génération multi-tâches IA
+            prompt = f"""
+                        Tu es un assistant qui génère une liste de tâches détaillées à partir d'une liste d'items. Pour chaque item ci-dessous, crée une tâche claire et concise, avec :
+                        - un titre court (max 3/4 caractères)
+                        - une description détaillée
+                        - un ou deux hashtags pertinents (ex: #productivité, #santé)
+                        - une priorité selon la matrice d'Eisenhower (important_urgent, important_not_urgent, not_important_urgent, not_important_not_urgent)
+                        - une estimation du temps (ex: 30min, 1h)
+                        - une deadline logique (YYYY-MM-DD)
+
+                        Retourne un tableau JSON de tâches, chaque tâche au format :
+                        {
+                        "id": 1,
+                        "title": "Titre court max 3/4 caractères",
+                        "text": "Description court max 3/4 mots",
+                        "hashtags": ["hashtag1", "hashtag2"],
+                        "eisenhower": "important_urgent",
+                        "estimated_time": "30min",
+                        "deadline": "2024-06-01",
+                        "completed": false
+                        }
+
+Liste d'items :
+{split_themes}
+"""
             response = client.chat.completions.create(
                 model=os.environ.get("MODEL_OPENAI"),
                 messages=[
-                    {"role": "system", "content": f"""Tu es un assistant qui génère une tâche unique et détaillée. 
+                    {"role": "system", "content": prompt}
+                ],
+                temperature=0.5,
+            )
+            response_text = response.choices[0].message.content.strip()
+            # Extraire le JSON
+            json_match = re.search(r'\[.*\]', response_text, re.DOTALL)
+            if json_match:
+                response_text = json_match.group(0)
+            try:
+                tasks = json.loads(response_text)
+                for t in tasks:
+                    t["completed"] = t.get("completed", False)
+                    if "theme" not in t:
+                        t["theme"] = theme
+                    if "user_id" not in t:
+                        t["user_id"] = "test_user"
+                for t in tasks:
+                    await supabase_service.create_task(t)
+                return {"theme": theme, "tasks": tasks}
+            except json.JSONDecodeError as e:
+                logger.error(f"Erreur lors du parsing JSON multi-tâches: {str(e)}")
+                raise HTTPException(status_code=500, detail="Erreur lors de la génération des tâches multiples")
+        else:
+            # Générer une tâche unique
+            response = client.chat.completions.create(
+                model=os.environ.get("MODEL_OPENAI"),
+                messages=[
+                    {"role": "system", "content": f"""Tu es un assistant qui génère une tâche unique et détaillée avec un titre en 3/5 mots. 
                     Crée une seule tâche pour le thème: {theme}.
                     
                     Pour cette tâche:
@@ -243,7 +398,7 @@ async def generate_tasks(data: Dict[str, Any] = Body(...)):
                     
                     Retourne un objet JSON avec ces clés:
                     - id (1)
-                    - text (description de la tâche)
+                    - text (description de la tâche court max 3/4 mots)
                     - hashtags (liste de hashtags pertinents sans le symbole #)
                     - eisenhower (important_urgent, important_not_urgent, not_important_urgent, not_important_not_urgent)
                     - estimated_time (chaîne de caractères comme "30min" ou "2h")
@@ -251,7 +406,7 @@ async def generate_tasks(data: Dict[str, Any] = Body(...)):
                     - completed (toujours false)
                     """}
                 ],
-                temperature=0.7,
+                temperature=0.5,
             )
         
         response_text = response.choices[0].message.content.strip()
@@ -270,11 +425,19 @@ async def generate_tasks(data: Dict[str, Any] = Body(...)):
                 
                 # Générer des IDs uniques pour chaque tâche
                 for i, task in enumerate(tasks):
-                    task["id"] = i + 1
                     task["completed"] = False
+                    if "theme" not in task:
+                        task["theme"] = theme
+                    if "user_id" not in task:
+                        task["user_id"] = "test_user"
+                    # Supprimer l'ID pour laisser Supabase l'auto-générer
+                    if "id" in task:
+                        del task["id"]
+                    logger.info(f"[GEN] Tâche SMART à insérer: {task}")
                 
                 # Sauvegarder l'objectif SMART et ses tâches
                 await supabase_service.save_smart_objective(theme, smart_objective, tasks)
+                logger.info(f"[GEN] Tâches SMART insérées dans Supabase")
                 
                 return {
                     "theme": theme,
@@ -294,9 +457,18 @@ async def generate_tasks(data: Dict[str, Any] = Body(...)):
                 
                 task_data = json.loads(response_text)
                 task_data["completed"] = False
+                if "theme" not in task_data:
+                    task_data["theme"] = theme
+                if "user_id" not in task_data:
+                    task_data["user_id"] = "test_user"
+                # Supprimer l'ID pour laisser Supabase l'auto-générer
+                if "id" in task_data:
+                    del task_data["id"]
+                logger.info(f"[GEN] Tâche simple à insérer: {task_data}")
                 
                 # Sauvegarder la tâche
-                await supabase_service.create_task(task_data)
+                result = await supabase_service.create_task(task_data)
+                logger.info(f"[GEN] Résultat insertion Supabase: {result}")
                 
                 return {"theme": theme, "tasks": [task_data]}
             except json.JSONDecodeError as e:
@@ -308,7 +480,7 @@ async def generate_tasks(data: Dict[str, Any] = Body(...)):
         raise HTTPException(status_code=500, detail=f"Erreur interne: {str(e)}")
 
 # API pour récupérer les tâches par thème
-@router.get("/tasks/{theme}")
+@router.get("/tasks/by-theme/{theme}")
 async def get_tasks(theme: str):
     try:
         tasks = await supabase_service.get_tasks_by_theme(theme)
@@ -397,7 +569,7 @@ async def get_recommendations(
                     "recommendations": [
                         {{
                             "task_id": "ID de la tâche recommandée",
-                            "text": "Description de la tâche",
+                            "text": "Description de la tâche court max 3/4 mots",
                             "reason": "Explication courte de pourquoi cette tâche est recommandée maintenant"
                         }},
                         ...
@@ -508,3 +680,26 @@ async def get_weekly_review():
             },
             "smart_objectives": []
         }
+
+# API simple pour marquer une tâche comme terminée
+@router.patch("/tasks/{task_id}/complete")
+async def mark_task_complete(task_id: int, body: Dict[str, Any] = Body(...)):
+    logger.info(f"🔄 === PATCH /api/tasks/{task_id}/complete ===")
+    try:
+        completed = body.get("completed", True)
+        logger.info(f"🔄 Marquage tâche {task_id} comme completed = {completed}")
+        
+        # Mise à jour directe via Supabase
+        updated_task = await supabase_service.update_task_by_id(task_id, {"completed": completed})
+        
+        if updated_task:
+            logger.info(f"✅ Tâche {task_id} mise à jour: completed = {updated_task.get('completed')}")
+            return {"success": True, "task": updated_task}
+        else:
+            raise HTTPException(status_code=404, detail=f"Tâche {task_id} non trouvée")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Erreur PATCH /api/tasks/{task_id}/complete: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Erreur interne: {str(e)}")

@@ -328,6 +328,19 @@ export const habitService = {
   }
 };
 
+export async function getGoogleEventsToday() {
+  const res = await fetch('/api/google/events/today');
+  if (!res.ok) throw new Error('Erreur récupération events Google');
+  return res.json();
+}
+
+export async function addGoogleEvent({ summary, description, start, end }) {
+  const params = new URLSearchParams({ summary, description, start, end });
+  const res = await fetch(`/api/google/add_event?${params.toString()}`, { method: 'POST' });
+  if (!res.ok) throw new Error('Erreur ajout event Google');
+  return res.json();
+}
+
 export default {
   themeService,
   taskService,

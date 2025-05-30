@@ -3,7 +3,7 @@ const isDevelopment = window.location.hostname === 'localhost' || window.locatio
 
 export const API_CONFIG = {
   baseURL: isDevelopment 
-    ? 'http://localhost:8001'  // Development sur ton Mac
+    ? 'http://localhost:8000'  // Development sur ton Mac
     : `http://${window.location.hostname}:8001`,  // Production sur VM (utilise la même IP que le frontend)
   timeout: 10000,
   headers: {
