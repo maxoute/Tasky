@@ -1,5 +1,12 @@
 import os
-import requests
+try:
+    import requests  # type: ignore
+    _HAVE_REQUESTS = True
+except Exception:  # pragma: no cover - fallback if requests not installed
+    import urllib.request
+    import urllib.parse
+    import gzip
+    _HAVE_REQUESTS = False
 import json
 from typing import Dict, List, Any
 from datetime import datetime
@@ -65,17 +72,22 @@ class BraveSearchService:
         
         try:
             logger.info(f"Recherche Brave: {query}")
-            response = requests.get(self.base_url, params=params, headers=headers)
-            response.raise_for_status()
-            
-            return response.json()
-            
-        except requests.exceptions.RequestException as e:
+            if _HAVE_REQUESTS:
+                response = requests.get(self.base_url, params=params, headers=headers)
+                response.raise_for_status()
+                return response.json()
+            else:  # Fallback utilisant urllib
+                url = f"{self.base_url}?" + urllib.parse.urlencode(params)
+                req = urllib.request.Request(url, headers=headers)
+                with urllib.request.urlopen(req) as resp:
+                    data = resp.read()
+                    if resp.headers.get("Content-Encoding") == "gzip":
+                        data = gzip.decompress(data)
+                return json.loads(data.decode())
+
+        except Exception as e:
             logger.error(f"Erreur API Brave Search: {e}")
             return {"error": f"Erreur de requête: {str(e)}"}
-        except json.JSONDecodeError as e:
-            logger.error(f"Erreur décodage JSON: {e}")
-            return {"error": "Réponse API invalide"}
     
     def search_for_video_content(self, video_prompt: str) -> Dict[str, Any]:
         """
