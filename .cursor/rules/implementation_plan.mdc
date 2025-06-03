@@ -1,0 +1,38 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+🛠 implementation_plan.mdc
+
+Étape 1 : MVP (version de base)
+
+Génération de tâches avec OpenAI ou Ollama
+
+Interface Flask simple avec Tailwind
+
+Tracking JSON local
+
+Étape 2 : Intelligence IA
+
+Classification Eisenhower
+
+Objectifs SMART générés automatiquement
+
+Suggestions IA contextuelles
+
+Étape 3 : Expérience utilisateur
+
+Streaks visibles
+
+Rétro-analyse hebdo
+
+Vue filtres + priorités
+
+Étape 4 (bonus) :
+
+Authentification
+
+Base SQLite ou Supabase
+
+Mode hors-ligne (caching)

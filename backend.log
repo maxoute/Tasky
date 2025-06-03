@@ -1,0 +1,13 @@
+INFO:services.supabase_service:Connexion à Supabase établie avec succès
+/Users/maxens/Desktop/github-projects/Mentor IA/venv/lib/python3.10/site-packages/pydantic/_internal/_config.py:373: UserWarning: Valid config keys have changed in V2:
+* 'orm_mode' has been renamed to 'from_attributes'
+  warnings.warn(message, UserWarning)
+INFO:services.habits_service:Connexion Supabase établie avec succès
+INFO:services.llm_service:Configuration du LLM avec le modèle: gpt-4o-mini
+INFO:services.llm_service:Clé API (premiers caractères): sk-proj-...
+Traceback (most recent call last):
+  File "/Users/maxens/Desktop/github-projects/Mentor IA/backend/app_fastapi.py", line 59, in <module>
+    app.mount("/static", StaticFiles(directory=f"{react_build_path}/static"), name="static")
+  File "/Users/maxens/Desktop/github-projects/Mentor IA/venv/lib/python3.10/site-packages/starlette/staticfiles.py", line 59, in __init__
+    raise RuntimeError(f"Directory '{directory}' does not exist")
+RuntimeError: Directory '/Users/maxens/Desktop/github-projects/Mentor IA/frontend/build/static' does not exist

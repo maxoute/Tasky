@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TASK. | Assistant To-Do</title>
+  
+  <!-- Préconnexions pour optimisation -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  
+  <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Favicon -->
+  <link rel="manifest" href="/manifest.json" />
+  
+  <!-- Variables CSS globales -->
+    <style>
+        :root {
+      --primary-color: #202020;
+      --secondary-color: #383838;
+      --accent-color: #fd7e14;
+      --light-bg: #f5f7fa;
+      --dark-bg: #1a1a1a;
+      --text-color: #333;
+      --light-text: #f5f7fa;
+      --border-radius: 8px;
+      --box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      --transition: all 0.3s ease;
+      
+      /* Couleurs Eisenhower */
+      --urgent-important: #ff6b6b;
+      --not-urgent-important: #444444;
+      --urgent-not-important: #ffd166;
+      --not-urgent-not-important: #c7ccd1;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+      background-color: var(--light-bg);
+      color: var(--text-color);
+      min-height: 100vh;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      display: flex;
+      gap: 20px;
+    }
+    
+    .sidebar {
+      flex: 0 0 250px;
+      background-color: white;
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+      padding: 20px;
+      height: calc(100vh - 40px);
+      position: sticky;
+      top: 20px;
+      overflow-y: auto;
+    }
+    
+    .content {
+      flex: 1;
+            display: flex;
+            flex-direction: column;
+      gap: 20px;
+    }
+    
+    .card {
+      background-color: white;
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    
+    h1, h2, h3 {
+      margin-bottom: 15px;
+      color: var(--primary-color);
+    }
+    
+    .input-container {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    
+    input, textarea, select {
+      padding: 10px 15px;
+      border: 1px solid #ddd;
+      border-radius: var(--border-radius);
+      font-size: 14px;
+      flex: 1;
+    }
+    
+    .btn {
+      padding: 10px 15px;
+      border: none;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      font-weight: 500;
+      transition: var(--transition);
+    }
+    
+    .btn.primary {
+      background-color: var(--primary-color);
+      color: white;
+    }
+    
+    .btn.primary:hover {
+      background-color: var(--secondary-color);
+    }
+    
+    .btn.secondary {
+      background-color: #eee;
+      color: var(--text-color);
+    }
+    
+    .btn.secondary:hover {
+      background-color: #ddd;
+    }
+    
+    .task-list {
+      list-style: none;
+    }
+    
+    .task-item {
+            display: flex;
+            align-items: center;
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+      transition: var(--transition);
+    }
+    
+    .task-item:last-child {
+      border-bottom: none;
+    }
+    
+    .task-item:hover {
+      background-color: rgba(0,0,0,0.02);
+    }
+    
+    .task-checkbox {
+      margin-right: 10px;
+    }
+    
+    .task-content {
+      flex: 1;
+        }
+
+        .theme-list {
+            list-style: none;
+      margin-top: 10px;
+        }
+
+        .theme-item {
+      padding: 8px;
+            cursor: pointer;
+      border-radius: var(--border-radius);
+      transition: var(--transition);
+        }
+
+        .theme-item:hover {
+      background-color: rgba(0,0,0,0.05);
+    }
+    
+    .loading {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin: 20px 0;
+    }
+    
+    .loading-spinner {
+      border: 3px solid #eee;
+      border-top: 3px solid var(--primary-color);
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .stats {
+      display: flex;
+      gap: 15px;
+      margin-top: 10px;
+    }
+    
+    .stat-card {
+      flex: 1;
+      background-color: var(--light-bg);
+      border-radius: var(--border-radius);
+      padding: 15px;
+      text-align: center;
+    }
+    
+    .stat-value {
+      font-size: 24px;
+      font-weight: 600;
+            color: var(--primary-color);
+        }
+
+    .stat-label {
+      font-size: 13px;
+      color: #777;
+    }
+    
+    .notification {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 15px 20px;
+      background-color: var(--primary-color);
+      color: white;
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+      transform: translateY(100px);
+      opacity: 0;
+      transition: var(--transition);
+      z-index: 1000;
+    }
+    
+    .notification.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+    
+    /* Styles Matrice d'Eisenhower */
+    .eisenhower-matrix {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 15px;
+      margin-top: 20px;
+      height: 400px;
+    }
+    
+    .matrix-quadrant {
+      border-radius: var(--border-radius);
+      padding: 15px;
+      background-color: white;
+      box-shadow: var(--box-shadow);
+      overflow-y: auto;
+    }
+    
+    .quadrant-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 10px;
+            display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    
+    .q1 {
+      border-left: 4px solid var(--urgent-important);
+    }
+    
+    .q2 {
+      border-left: 4px solid var(--not-urgent-important);
+    }
+    
+    .q3 {
+      border-left: 4px solid var(--urgent-not-important);
+    }
+    
+    .q4 {
+      border-left: 4px solid var(--not-urgent-not-important);
+    }
+    
+    /* Styles pour les tâches dans la matrice */
+    .matrix-task {
+      padding: 8px;
+      margin-bottom: 8px;
+      border-radius: 4px;
+      background-color: var(--light-bg);
+      font-size: 13px;
+            cursor: pointer;
+      transition: var(--transition);
+            display: flex;
+            align-items: center;
+    }
+    
+    .matrix-task:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
+    /* Styles pour les objectifs SMART */
+    .smart-objective-container {
+      background-color: var(--light-bg);
+      border-radius: var(--border-radius);
+      padding: 15px;
+      margin-top: 20px;
+    }
+    
+    .smart-criteria {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    
+    .smart-criterion {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+    
+    .criterion-letter {
+      width: 30px;
+      height: 30px;
+            display: flex;
+            align-items: center;
+      justify-content: center;
+      background-color: var(--primary-color);
+      color: white;
+      border-radius: 50%;
+      font-weight: bold;
+    }
+    
+    .criterion-content {
+      flex: 1;
+    }
+    
+    .criterion-title {
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+    
+    .criterion-description {
+      font-size: 14px;
+      color: #555;
+    }
+    
+    .smart-tasks-list {
+      list-style: none;
+      margin: 15px 0;
+    }
+    
+    .smart-tasks-list li {
+      padding: 8px 0;
+      border-bottom: 1px solid #eee;
+    }
+    
+    /* Styles pour le système de streaks */
+    .streak-container {
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      color: white;
+      border-radius: var(--border-radius);
+      padding: 15px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .streak-info {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .streak-title {
+      font-size: 14px;
+      opacity: 0.9;
+      margin-bottom: 5px;
+    }
+    
+    .streak-days {
+      font-size: 24px;
+      font-weight: 600;
+    }
+    
+    .streak-icon {
+      font-size: 30px;
+      margin-right: 10px;
+      color: #FFD700;
+    }
+    
+    /* Styles pour les modales */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      z-index: 1000;
+      overflow-y: auto;
+    }
+    
+    .modal-content {
+      background-color: white;
+      margin: 50px auto;
+      padding: 25px;
+      border-radius: var(--border-radius);
+      max-width: 700px;
+      box-shadow: var(--box-shadow);
+      position: relative;
+    }
+    
+    .close-modal {
+      position: absolute;
+      top: 15px;
+      right: 20px;
+      font-size: 24px;
+      cursor: pointer;
+      color: #888;
+    }
+    
+    .close-modal:hover {
+      color: var(--text-color);
+    }
+    
+    /* Styles pour les hashtags et catégories */
+    .task-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 5px;
+    }
+    
+    .task-tag {
+      background-color: var(--light-bg);
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      color: var(--secondary-color);
+            cursor: pointer;
+        }
+
+    .task-tag:hover {
+            background-color: var(--secondary-color);
+      color: white;
+    }
+    
+    /* Styles pour les détails de tâche */
+    .task-details {
+      margin-top: 5px;
+      font-size: 13px;
+      color: #777;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .task-priority {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 5px;
+    }
+    
+    .priority-high {
+      background-color: var(--urgent-important);
+    }
+    
+    .priority-medium {
+      background-color: var(--urgent-not-important);
+    }
+    
+    .priority-low {
+      background-color: var(--not-urgent-not-important);
+    }
+    
+    /* Styles pour les recommandations */
+    .recommendations-list {
+      margin-top: 15px;
+    }
+    
+    .recommendation-item {
+      background-color: var(--light-bg);
+      border-radius: var(--border-radius);
+      padding: 15px;
+      margin-bottom: 10px;
+    }
+    
+    .recommendation-title {
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+    
+    .recommendation-description {
+      font-size: 14px;
+      color: #555;
+    }
+    
+    .recommendation-actions {
+      margin-top: 10px;
+            display: flex;
+      gap: 10px;
+    }
+    
+    /* Styles pour l'analyse hebdomadaire */
+    .weekly-stats {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    
+    .stat-item {
+      text-align: center;
+      flex: 1;
+    }
+    
+    .categories-performance {
+      margin-bottom: 20px;
+    }
+    
+    .category-progress {
+      margin-bottom: 12px;
+    }
+    
+    .category-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 5px;
+      font-size: 14px;
+    }
+    
+    .category-name {
+      font-weight: 500;
+    }
+    
+    .progress-bar {
+      height: 8px;
+      background-color: #eee;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      background-color: var(--primary-color);
+      border-radius: 4px;
+      transition: var(--transition);
+    }
+    
+    .improvement-suggestions {
+      margin-top: 10px;
+    }
+    
+    .suggestion-item {
+      background-color: var(--light-bg);
+      border-radius: var(--border-radius);
+      padding: 10px 15px;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+    
+    /* Animation de mise en évidence */
+    @keyframes highlight {
+      0% { background-color: rgba(74, 111, 165, 0.2); }
+      100% { background-color: transparent; }
+    }
+    
+    .highlight {
+      animation: highlight 2s ease-out;
+        }
+
+    /* Animation de chargement, utilisée par React pendant le chargement */
+    .loading-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      width: 100%;
+      background-color: var(--light-bg);
+                flex-direction: column;
+            }
+            
+    .loader {
+      border: 4px solid rgba(0, 0, 0, 0.1);
+      border-left: 4px solid var(--primary-color);
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin-bottom: 15px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Élément root où React montera l'application -->
+    <div id="root">
+        <!-- Loader affiché pendant le chargement de React -->
+        <div class="loading-container">
+            <div class="loader"></div>
+        <p>Chargement de l'application...</p>
+    </div>
+    </div>
+    <script type="module" src="/src/index.jsx"></script>
+</body>
+</html> 
