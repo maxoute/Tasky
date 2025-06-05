@@ -165,15 +165,15 @@ const ThemeGenerator = ({ onTasksGenerated }) => {
   const today = new Date().toISOString().split('T')[0];
 
   return (
-    <div className="neo-card p-8 min-h-[400px]">
-      <h2 className="text-3xl font-bold mb-4 font-futuristic">Générateur de tâches IA</h2>
-      <p className="text-gray-600 mb-6 text-lg">
-        Entrez un thème ou un objectif pour générer des tâches personnalisées
-      </p>
-
+    <div>
       {error && (
-        <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded">
-          <p className="text-red-700 text-sm">{error}</p>
+        <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-lg">
+          <div className="flex items-center">
+            <svg className="w-5 h-5 text-red-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+            </svg>
+            <p className="text-red-700 text-sm">{error}</p>
+          </div>
         </div>
       )}
 
@@ -184,128 +184,149 @@ const ThemeGenerator = ({ onTasksGenerated }) => {
             value={theme}
             onChange={(e) => setTheme(e.target.value)}
             placeholder="Ex: Améliorer ma productivité, Organiser un voyage..."
-            className="neo-input w-full pl-6 pr-12 py-5 rounded-lg text-lg"
+            className="input-modern w-full pl-6 pr-12 py-4 text-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             disabled={isLoading}
           />
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            type="button"
-            onClick={() => setTheme('')}
-            className={`absolute right-5 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-700 ${
-              !theme || isLoading ? 'hidden' : 'block'
-            }`}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-            </svg>
-          </motion.button>
+          {theme && !isLoading && (
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              type="button"
+              onClick={() => setTheme('')}
+              className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-700 transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            </motion.button>
+          )}
         </div>
 
-        <div className="flex items-center justify-between">
-          <label className="inline-flex items-center cursor-pointer">
-            <div className="relative">
-              <input 
-                type="checkbox" 
-                className="sr-only" 
-                checked={isSmart} 
-                onChange={() => setIsSmart(!isSmart)}
-                disabled={isLoading}
+        {/* Options avancées */}
+        <div className="flex items-center justify-between py-3">
+          <div className="flex items-center space-x-6">
+            <label className="flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isSmart}
+                onChange={(e) => setIsSmart(e.target.checked)}
+                className="sr-only"
               />
-              <div className={`block w-14 h-7 rounded-full transition-colors duration-300 ${isSmart ? 'bg-black' : 'bg-gray-300'}`}></div>
-              <div className={`dot absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition transform duration-300 ${isSmart ? 'translate-x-7' : ''}`}></div>
-            </div>
-            <span className="ml-3 text-base font-medium text-gray-700">Génération d'objectif SMART</span>
-          </label>
+              <div className={`relative w-12 h-6 rounded-full transition-colors duration-300 ${
+                isSmart ? 'bg-gradient-to-r from-purple-500 to-blue-600' : 'bg-gray-300'
+              }`}>
+                <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform duration-300 ${
+                  isSmart ? 'transform translate-x-6' : ''
+                }`} />
+              </div>
+              <span className="ml-3 text-sm font-medium text-gray-700">Génération d'objectif SMART</span>
+            </label>
+          </div>
           
-          <button 
-            type="button" 
-            className="text-sm font-medium text-blue-600 hover:text-blue-800 flex items-center"
+          <button
+            type="button"
             onClick={() => setShowAdvanced(!showAdvanced)}
-            disabled={isLoading}
+            className="text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors flex items-center"
           >
-            {showAdvanced ? 'Masquer' : 'Afficher'} les options avancées
-            <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 ml-1 transition-transform duration-300 ${showAdvanced ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+            <span>Afficher les options avancées</span>
+            <svg 
+              className={`ml-1 w-4 h-4 transition-transform duration-300 ${showAdvanced ? 'rotate-180' : ''}`}
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
             </svg>
           </button>
         </div>
-        
+
+        {/* Panel des options avancées */}
         {showAdvanced && (
-          <div className="space-y-4 p-4 bg-gray-50 rounded-lg animated-fade-in">
-            <div>
-              <label htmlFor="deadline" className="block text-sm font-medium text-gray-700 mb-1">
-                Date limite commune
-              </label>
-              <input
-                type="date"
-                id="deadline"
-                name="deadline"
-                min={today}
-                value={deadline}
-                onChange={(e) => setDeadline(e.target.value)}
-                className="neo-input w-full p-3 rounded-lg"
-                disabled={isLoading}
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Toutes les tâches générées auront cette deadline si définie
-              </p>
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="bg-gray-50 rounded-lg p-4"
+          >
+            <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+              <svg className="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
+              </svg>
+              Options avancées
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Date limite (optionnel)
+                </label>
+                <input
+                  type="date"
+                  value={deadline}
+                  onChange={(e) => setDeadline(e.target.value)}
+                  min={today}
+                  className="input-modern w-full"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Catégorie (optionnel)
+                </label>
+                <select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className="input-modern w-full"
+                >
+                  <option value="">Sélectionner une catégorie</option>
+                  {categories.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
             </div>
-            
-            <div>
-              <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
-                Catégorie
-              </label>
-              <select
-                id="category"
-                name="category"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="neo-input w-full p-3 rounded-lg"
-                disabled={isLoading}
-              >
-                <option value="">-- Sélectionner une catégorie --</option>
-                {categories.map((cat) => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
-              <p className="text-xs text-gray-500 mt-1">
-                Assigne automatiquement toutes les tâches à cette catégorie
-              </p>
-            </div>
-          </div>
+          </motion.div>
         )}
 
         <motion.button
-          whileHover={{ y: -2, boxShadow: "0 6px 12px rgba(0, 0, 0, 0.15)" }}
-          whileTap={{ y: 0, boxShadow: "0 3px 6px rgba(0, 0, 0, 0.1)" }}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
           type="submit"
-          className="neo-button w-full py-4 rounded-lg flex items-center justify-center font-medium text-white text-lg"
           disabled={isLoading || !theme.trim()}
+          className={`btn-primary w-full py-4 text-lg font-semibold rounded-xl transition-all duration-300 ${
+            isLoading || !theme.trim() 
+              ? 'opacity-50 cursor-not-allowed transform-none shadow-none' 
+              : 'hover:shadow-lg'
+          }`}
         >
           {isLoading ? (
-            <div className="futuristic-loader w-6 h-6 mr-2"></div>
+            <div className="flex items-center justify-center">
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+              Génération en cours...
+            </div>
           ) : (
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
-            </svg>
+            <div className="flex items-center justify-center">
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+              Générer mes tâches
+            </div>
           )}
-          {isLoading ? 'Génération en cours...' : 'Générer mes tâches'}
         </motion.button>
-      </form>
 
-      <div className="mt-6 p-5 bg-gray-50 rounded-lg flex items-start">
-        <div className="flex-shrink-0 mt-0.5">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-          </svg>
+        {/* Astuce pour l'utilisateur */}
+        <div className="bg-yellow-50 rounded-lg p-4">
+          <div className="flex items-start">
+            <svg className="w-5 h-5 text-yellow-600 mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+            </svg>
+            <div>
+              <p className="text-sm font-medium text-yellow-800 mb-1">Astuce</p>
+              <p className="text-sm text-yellow-700">
+                Essayez des thèmes précis comme "Apprendre la photographie", 
+                "Rénover ma chambre" ou "Préparer un marathon".
+              </p>
+            </div>
+          </div>
         </div>
-        <div className="ml-3">
-          <h3 className="text-base font-medium text-gray-800">Astuce</h3>
-          <p className="text-sm text-gray-600 mt-1">
-            Essayez des thèmes précis comme "Apprendre la photographie", "Rénover ma chambre" ou "Préparer un marathon".
-          </p>
-        </div>
-      </div>
+      </form>
     </div>
   );
 };

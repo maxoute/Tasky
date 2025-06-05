@@ -8,11 +8,11 @@ from pydantic import BaseModel
 from typing import List
 from dotenv import load_dotenv
 import logging
-from routes import todos, habits, analytics, smart, ai_agents
+from routes import todos, habits, analytics, smart, ai_agents, search_routes, n8n_routes
 # from routes import google_calendar  # Commenté temporairement
 from datetime import datetime
 from passlib.context import CryptContext
-from prometheus_client import Counter, Histogram
+from prometheus_client import Counter, Histogram, CollectorRegistry, REGISTRY
 import time
 import sentry_sdk
 from supabase_service import add_task
@@ -32,8 +32,14 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Métriques Prometheus
-REQUEST_COUNT = Counter('http_requests_total', 'Total des requêtes HTTP', ['method', 'endpoint', 'status'])
-REQUEST_LATENCY = Histogram('http_request_duration_seconds', 'Latence des requêtes HTTP')
+try:
+    REQUEST_COUNT = Counter('http_requests_total', 'Total des requêtes HTTP', ['method', 'endpoint', 'status'])
+    REQUEST_LATENCY = Histogram('http_request_duration_seconds', 'Latence des requêtes HTTP')
+except ValueError:
+    # Les métriques existent déjà, les récupérer
+    REQUEST_COUNT = None
+    REQUEST_LATENCY = None
+    logger.warning("Métriques Prometheus déjà enregistrées, utilisation des métriques existantes")
 
 # Configuration de sécurité
 SECRET_KEY = os.getenv("SECRET_KEY", "votre_clé_secrète")
@@ -71,12 +77,18 @@ async def metrics_middleware(request: Request, call_next):
     start_time = time.time()
     response = await call_next(request)
     duration = time.time() - start_time
-    REQUEST_COUNT.labels(
-        method=request.method,
-        endpoint=request.url.path,
-        status=response.status_code
-    ).inc()
-    REQUEST_LATENCY.observe(duration)
+    
+    # Enregistrer les métriques seulement si elles sont disponibles
+    if REQUEST_COUNT is not None:
+        REQUEST_COUNT.labels(
+            method=request.method,
+            endpoint=request.url.path,
+            status=response.status_code
+        ).inc()
+    
+    if REQUEST_LATENCY is not None:
+        REQUEST_LATENCY.observe(duration)
+    
     return response
 
 # Modèles Pydantic
@@ -133,6 +145,8 @@ app.include_router(habits.router, prefix="/api", tags=["Habits"])
 app.include_router(analytics.router, prefix="/api", tags=["Analytics"])
 app.include_router(smart.router, prefix="/api", tags=["SMART"])
 app.include_router(ai_agents.router, prefix="/api", tags=["AI Agents"])
+app.include_router(search_routes.router, prefix="/api", tags=["Search"])
+app.include_router(n8n_routes.router, tags=["N8N"])
 # app.include_router(google_calendar.router)  # Commenté temporairement
 
 # Montage des fichiers statiques de Vite

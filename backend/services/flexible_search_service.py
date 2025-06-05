@@ -6,7 +6,7 @@ Permet des recherches configurables et modulaires
 import os
 import requests
 import json
-from typing import Dict, List, Any, Optional, Union
+from typing import Dict, List, Any, Optional
 from datetime import datetime
 import logging
 from dataclasses import dataclass
@@ -18,7 +18,8 @@ logger = logging.getLogger(__name__)
 class SearchProvider(Enum):
     """Providers de recherche supportés"""
     BRAVE = "brave"
-    # On peut ajouter d'autres providers plus tard (Google, Bing, etc.)
+    GOOGLE = "google"
+    # On peut ajouter d'autres providers plus tard (Bing, etc.)
 
 
 class Freshness(Enum):
@@ -82,10 +83,15 @@ class FlexibleSearchService:
         """
         self.config = config or SearchConfig()
         self.api_key = os.getenv('BRAVE_API_KEY')
+        self.google_api_key = os.getenv('GOOGLE_API_KEY')
+        self.google_search_engine_id = os.getenv('GOOGLE_SEARCH_ENGINE_ID')
         self.base_url = "https://api.search.brave.com/res/v1/web/search"
+        self.google_base_url = "https://www.googleapis.com/customsearch/v1"
         
         if not self.api_key:
             logger.warning("BRAVE_API_KEY non trouvée dans les variables d'environnement")
+        if not self.google_api_key or not self.google_search_engine_id:
+            logger.warning("GOOGLE_API_KEY ou GOOGLE_SEARCH_ENGINE_ID manquante pour Google Custom Search")
     
     def search(self, 
                query: str, 
@@ -107,13 +113,22 @@ class FlexibleSearchService:
         
         if search_config.provider == SearchProvider.BRAVE:
             return self._brave_search(query, search_config)
+        elif search_config.provider == SearchProvider.GOOGLE:
+            return self._google_search(query, search_config)
         else:
             return {"error": f"Provider {search_config.provider} not supported"}
     
     def _brave_search(self, query: str, config: SearchConfig) -> Dict[str, Any]:
         """Recherche avec l'API Brave"""
+        logger.info("🔥 === DÉBUT BRAVE SEARCH ===")
+        logger.info(f"🔍 Query: '{query}'")
+        logger.info(f"⚙️ Config: provider={config.provider.value}, country={config.country}, lang={config.language}")
+        
         if not self.api_key:
+            logger.error("❌ BRAVE_API_KEY manquante")
             return {"error": "Brave API key missing"}
+        
+        logger.info(f"🔑 API Key configurée: {self.api_key[:10]}...")
         
         params = {
             "q": query,
@@ -127,19 +142,91 @@ class FlexibleSearchService:
             "spellcheck": True
         }
         
+        logger.info("📋 Paramètres de recherche:")
+        for key, value in params.items():
+            logger.info(f"   {key}: {value}")
+        
         headers = {
             "Accept": "application/json",
             "Accept-Encoding": "gzip",
             "X-Subscription-Token": self.api_key
         }
         
+        logger.info(f"📡 Headers: {list(headers.keys())}")
+        
         try:
-            logger.info(f"Brave search: {query}")
+            logger.info(f"🚀 Envoi requête vers: {self.base_url}")
             response = requests.get(self.base_url, params=params, headers=headers)
+            
+            logger.info(f"📊 Status Code: {response.status_code}")
+            logger.info(f"📊 Response Headers: {dict(response.headers)}")
+            
             response.raise_for_status()
             
             raw_results = response.json()
+            logger.info("✅ Réponse JSON reçue")
+            logger.info(f"📊 Clés dans la réponse: {list(raw_results.keys())}")
+            
+            if "web" in raw_results:
+                web_results = raw_results.get("web", {}).get("results", [])
+                logger.info(f"🌐 Nombre de résultats web: {len(web_results)}")
+                
+                # Log des premiers résultats
+                for i, result in enumerate(web_results[:3], 1):
+                    logger.info(f"   📄 Résultat {i}: {result.get('title', 'Sans titre')[:50]}...")
+                    logger.info(f"       URL: {result.get('url', 'Sans URL')}")
+            
             formatted_results = self._format_results(raw_results, query, config)
+            logger.info(f"🎯 Formatage terminé: {formatted_results.get('total_results', 0)} résultats")
+            
+            if config.save_file:
+                logger.info("💾 Sauvegarde activée")
+                self._save_results(formatted_results, query)
+            
+            logger.info("🔥 === FIN BRAVE SEARCH (SUCCÈS) ===")
+            return formatted_results
+            
+        except requests.exceptions.RequestException as e:
+            logger.error(f"❌ Erreur requête Brave API: {e}")
+            logger.error(f"❌ Type d'erreur: {type(e).__name__}")
+            if hasattr(e, 'response') and e.response is not None:
+                logger.error(f"❌ Status Code: {e.response.status_code}")
+                logger.error(f"❌ Response Text: {e.response.text[:200]}...")
+            logger.info("🔥 === FIN BRAVE SEARCH (ERREUR REQUÊTE) ===")
+            return {"error": f"Request error: {str(e)}"}
+        except json.JSONDecodeError as e:
+            logger.error(f"❌ Erreur décodage JSON: {e}")
+            logger.info("🔥 === FIN BRAVE SEARCH (ERREUR JSON) ===")
+            return {"error": "Invalid API response"}
+    
+    def _google_search(self, query: str, config: SearchConfig) -> Dict[str, Any]:
+        """Recherche avec l'API Google Custom Search"""
+        if not self.google_api_key or not self.google_search_engine_id:
+            return {"error": "Google API key or Search Engine ID missing"}
+        
+        # Mapper les paramètres Brave vers Google
+        google_params = {
+            "key": self.google_api_key,
+            "cx": self.google_search_engine_id,
+            "q": query,
+            "num": min(config.n_results, 10),  # Google max 10 par requête
+            "start": 1,  # Google utilise start=1 pour la première page
+            "lr": f"lang_{config.language}",
+            "gl": config.country.lower(),
+            "safe": self._map_safesearch_to_google(config.safesearch)
+        }
+        
+        # Ajouter le filtrage par date si spécifié
+        if config.freshness != Freshness.ALL_TIME:
+            google_params["dateRestrict"] = self._map_freshness_to_google(config.freshness)
+        
+        try:
+            logger.info(f"Google Custom Search: {query}")
+            response = requests.get(self.google_base_url, params=google_params)
+            response.raise_for_status()
+            
+            raw_results = response.json()
+            formatted_results = self._format_google_results(raw_results, query, config)
             
             if config.save_file:
                 self._save_results(formatted_results, query)
@@ -147,11 +234,62 @@ class FlexibleSearchService:
             return formatted_results
             
         except requests.exceptions.RequestException as e:
-            logger.error(f"Brave API error: {e}")
+            logger.error(f"Google API error: {e}")
             return {"error": f"Request error: {str(e)}"}
         except json.JSONDecodeError as e:
             logger.error(f"JSON decode error: {e}")
             return {"error": "Invalid API response"}
+    
+    def _map_safesearch_to_google(self, safesearch: SafeSearch) -> str:
+        """Convertit SafeSearch vers le format Google"""
+        mapping = {
+            SafeSearch.OFF: "off",
+            SafeSearch.MODERATE: "medium", 
+            SafeSearch.STRICT: "high"
+        }
+        return mapping.get(safesearch, "medium")
+    
+    def _map_freshness_to_google(self, freshness: Freshness) -> str:
+        """Convertit Freshness vers le format Google dateRestrict"""
+        mapping = {
+            Freshness.PAST_DAY: "d1",
+            Freshness.PAST_WEEK: "w1",
+            Freshness.PAST_MONTH: "m1",
+            Freshness.PAST_YEAR: "y1"
+        }
+        return mapping.get(freshness, "")
+    
+    def _format_google_results(self, raw_results: Dict, query: str, config: SearchConfig) -> Dict[str, Any]:
+        """Formate les résultats Google dans notre format standardisé"""
+        if "items" not in raw_results:
+            return {"error": "No results found"}
+        
+        google_items = raw_results.get("items", [])
+        
+        formatted_results = []
+        for item in google_items:
+            search_result = SearchResult(
+                title=item.get("title", ""),
+                url=item.get("link", ""),
+                description=item.get("snippet", ""),
+                published=item.get("cacheId", ""),  # Google n'a pas de date directe
+                source="Google Custom Search",
+                keywords=self._extract_keywords(item.get("title", "") + " " + item.get("snippet", ""))
+            )
+            formatted_results.append(search_result)
+        
+        return {
+            "query": query,
+            "total_results": len(formatted_results),
+            "results": [result.__dict__ for result in formatted_results],
+            "config_used": config.__dict__,
+            "timestamp": datetime.now().isoformat(),
+            "success": True,
+            "provider_metadata": {
+                "total_results_estimate": raw_results.get("searchInformation", {}).get("totalResults", "0"),
+                "search_time": raw_results.get("searchInformation", {}).get("searchTime", "0")
+            }
+        }
     
     def _format_results(self, raw_results: Dict, query: str, config: SearchConfig) -> Dict[str, Any]:
         """Formate les résultats dans un format standardisé"""

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 
-const Sidebar = ({ onThemeSelect, popularThemes = [], recentThemes = [], collapsed, setCollapsed }) => {
+const Sidebar = ({ onThemeSelect, popularThemes = [], recentThemes = [], collapsed, setCollapsed, sidebarOpen, setSidebarOpen }) => {
   const location = useLocation();
   const [showThemes, setShowThemes] = useState(false);
   
@@ -37,11 +37,11 @@ const Sidebar = ({ onThemeSelect, popularThemes = [], recentThemes = [], collaps
     },
     {
       path: '/tasks',
-      name: 'Tâches',
+      name: 'Vidéos',
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-          <path d="M9 11l3 3L22 4" />
-          <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
+          <path d="M23 7l-7 5 7 5V7z" />
+          <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
         </svg>
       ),
     },
@@ -87,14 +87,14 @@ const Sidebar = ({ onThemeSelect, popularThemes = [], recentThemes = [], collaps
 
   return (
     <div 
-      className={`sidebar bg-gray-900 text-white shadow-lg h-full z-40 ${collapsed ? 'w-16' : 'w-64'}`}
+      className={`sidebar bg-gray-900 text-white shadow-lg h-full z-40 ${collapsed ? 'w-0 lg:w-12' : 'w-56'} overflow-hidden`}
       style={{ transition: 'width 0.3s cubic-bezier(0.16, 1, 0.3, 1)' }}
     >
-      <div className="p-4 flex items-center justify-between border-b border-gray-700">
+      <div className="p-3 flex items-center justify-between border-b border-gray-700">
         {!collapsed && (
           <div className="flex items-center">
-            <div className="text-2xl font-bold font-mono tracking-tighter mr-2">TASK.</div>
-            <div className="h-5 w-5 bg-white rounded-full animate-pulse"></div>
+            <div className="text-xl font-bold font-mono tracking-tighter mr-2">TASK.</div>
+            <div className="h-4 w-4 bg-white rounded-full animate-pulse"></div>
           </div>
         )}
         <button 

@@ -144,17 +144,39 @@ function App() {
       console.error('❌ [Frontend] Erreur lors de la suppression de la tâche:', error);
     }
   };
-  
+
   return (
     <Router>
       <div className={`app-container bg-gray-50 ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
-        {/* Bouton hamburger mobile */}
+        {/* Bouton menu mobile - hamburger */}
         <button
-          className="fixed top-4 left-4 z-40 lg:hidden bg-white border border-gray-200 rounded-full p-2 shadow-md"
+          className="fixed top-4 left-4 z-50 lg:hidden bg-white border border-gray-200 rounded-lg p-3 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 active:scale-95"
           onClick={() => setSidebarOpen(true)}
           aria-label="Ouvrir le menu"
         >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
+          <svg 
+            width="20" 
+            height="20" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            xmlns="http://www.w3.org/2000/svg"
+            className="text-gray-700"
+          >
+            <g clipPath="url(#clip0_429_11066)">
+              <path 
+                d="M3 6.00092H21M3 12.0009H21M3 18.0009H21" 
+                stroke="currentColor" 
+                strokeWidth="2.5" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+              />
+            </g>
+            <defs>
+              <clipPath id="clip0_429_11066">
+                <rect width="24" height="24" fill="white" transform="translate(0 0.000915527)"/>
+              </clipPath>
+            </defs>
+          </svg>
         </button>
         <Sidebar 
           onThemeSelect={handleThemeSelect} 
@@ -165,7 +187,7 @@ function App() {
           sidebarOpen={sidebarOpen}
           setSidebarOpen={setSidebarOpen}
         />
-        <main className={`main-content transition-all duration-300 ${sidebarCollapsed ? 'ml-0 md:ml-16 lg:ml-16' : 'ml-0 md:ml-16 lg:ml-64'}`}>
+        <main className={`main-content transition-all duration-300 ${sidebarCollapsed ? 'ml-0 lg:ml-12' : 'ml-0 md:ml-12 lg:ml-56'}`}>
           <Routes>
             <Route path="/" element={
               <Dashboard 

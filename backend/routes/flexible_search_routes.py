@@ -4,7 +4,7 @@ Inspiré de l'approche CrewAI BraveSearchTool
 """
 
 from fastapi import APIRouter, HTTPException, Query
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Dict, Any, Optional, List
 import logging
 
@@ -19,30 +19,38 @@ from services.flexible_search_service import (
     TrendAnalyzer
 )
 
-logger = logging.getLogger(__name__)
+# Configuration du logger
+logger = logging.getLogger("flexible_search_routes")
 
-router = APIRouter(prefix="/api/search", tags=["flexible-search"])
+# Créer le router
+router = APIRouter(
+    prefix="/search",
+    tags=["flexible_search"],
+    responses={
+        404: {"description": "Not found"},
+        500: {"description": "Internal server error"}
+    }
+)
 
 
 class SearchRequest(BaseModel):
-    """Requête de recherche basique"""
-    query: str
-    country: Optional[str] = "FR"
-    language: Optional[str] = "fr"
-    n_results: Optional[int] = 10
+    """Modèle pour les requêtes de recherche rapide"""
+    query: str = Field(..., min_length=1, max_length=400, description="Requête de recherche")
+    n_results: int = Field(5, ge=1, le=20, description="Nombre de résultats souhaités")
+    provider: str = Field("brave", description="Provider de recherche (brave ou google)")
 
 
 class AdvancedSearchRequest(BaseModel):
-    """Requête de recherche avancée avec toutes les options"""
-    query: str
-    provider: Optional[str] = "brave"
-    country: Optional[str] = "FR"
-    language: Optional[str] = "fr"
-    n_results: Optional[int] = 10
-    freshness: Optional[str] = "pm"  # past_month
-    safesearch: Optional[str] = "moderate"
-    result_filter: Optional[str] = "web,news"
-    save_file: Optional[bool] = False
+    """Modèle pour les requêtes de recherche avancées"""
+    query: str = Field(..., min_length=1, max_length=400, description="Requête de recherche")
+    provider: str = Field("brave", description="Provider (brave ou google)")
+    country: str = Field("FR", description="Code pays (FR, US, etc.)")
+    language: str = Field("fr", description="Langue de recherche (fr, en, etc.)")
+    n_results: int = Field(10, ge=1, le=20, description="Nombre de résultats")
+    freshness: str = Field("all_time", description="Fraîcheur (all_time, past_day, past_week, etc.)")
+    safesearch: str = Field("moderate", description="Filtre SafeSearch (off, moderate, strict)")
+    result_filter: Optional[str] = Field(None, description="Filtres de résultats spécifiques")
+    save_file: bool = Field(False, description="Sauvegarder les résultats")
 
 
 class ScriptRequest(BaseModel):
@@ -53,34 +61,55 @@ class ScriptRequest(BaseModel):
     include_research: Optional[bool] = True
 
 
-@router.post("/quick")
-async def quick_search(request: SearchRequest) -> Dict[str, Any]:
+def validate_provider(provider: str) -> str:
+    """Valide et normalise le provider"""
+    valid_providers = ["brave", "google"]
+    provider_lower = provider.lower()
+    if provider_lower not in valid_providers:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Provider '{provider}' non supporté. Providers disponibles: {valid_providers}"
+        )
+    return provider_lower
+
+
+@router.post("/quick", response_model=Dict[str, Any])
+async def quick_search(request: SearchRequest):
     """
-    Recherche rapide avec paramètres minimaux
-    Équivalent à l'usage simple de BraveSearchTool
+    🚀 Recherche rapide - Interface simple style CrewAI
+    
+    **Usage:**
+    - Recherche rapide avec configuration minimale
+    - Support Brave et Google Custom Search
+    - Idéal pour intégrations simples
     """
     try:
-        if not request.query.strip():
-            raise HTTPException(status_code=400, detail="Query cannot be empty")
+        provider = validate_provider(request.provider)
         
-        # Utiliser l'interface QuickSearch
-        results = QuickSearch.search(
-            query=request.query,
-            n_results=request.n_results,
-            country=request.country
+        # Mapper vers les enums appropriés
+        search_provider = SearchProvider.GOOGLE if provider == "google" else SearchProvider.BRAVE
+        
+        config = SearchConfig(
+            provider=search_provider,
+            n_results=request.n_results
         )
         
+        service = FlexibleSearchService(config)
+        results = service.search(request.query)
+        
+        if not results.get("success", False):
+            raise HTTPException(status_code=400, detail=results.get("error", "Search failed"))
+        
         return {
-            "success": True,
+            "status": "success",
+            "provider_used": provider,
             "query": request.query,
-            "total_results": len(results),
-            "results": results,
-            "search_type": "quick"
+            "results": results
         }
         
     except Exception as e:
-        logger.error(f"Quick search error for '{request.query}': {e}")
-        raise HTTPException(status_code=500, detail=f"Search error: {str(e)}")
+        logger.error(f"Quick search error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/advanced")

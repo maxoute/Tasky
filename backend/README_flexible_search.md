@@ -1,6 +1,6 @@
-# Service de Recherche Flexible
+# 🔍 Service de Recherche Flexible - Multi-Provider
 
-> Inspiré de l'approche CrewAI BraveSearchTool - Simple, configurable et puissant
+Un service de recherche modulaire et configurable inspiré du style **CrewAI BraveSearchTool**, avec support de **Brave Search** et **Google Custom Search API**.
 
 ## 🎯 Vue d'ensemble
 
@@ -8,8 +8,39 @@ Le Service de Recherche Flexible est conçu pour offrir une interface modulaire 
 
 ## ✨ Fonctionnalités
 
-- **🚀 Recherche rapide** : Interface simple pour des besoins basiques
-- **⚙️ Configuration avancée** : Contrôle total sur tous les paramètres
+### 🚀 **Multi-Provider Support**
+- **Brave Search API** : Recherche privée et avancée
+- **Google Custom Search API** : Moteur personnalisé Google
+- Interface unifiée pour tous les providers
+
+### 🎯 **Interface Simple (style CrewAI)**
+```python
+from services.flexible_search_service import QuickSearch
+
+# Recherche rapide avec Brave (par défaut)
+results = QuickSearch.search("N8N automation tutorial", n_results=5)
+
+# Recherche avec Google Custom Search
+results = QuickSearch.search("Python automation", n_results=5, provider="google")
+```
+
+### ⚙️ **Configuration Avancée**
+```python
+from services.flexible_search_service import FlexibleSearchService, SearchConfig, SearchProvider
+
+config = SearchConfig(
+    provider=SearchProvider.GOOGLE,  # ou SearchProvider.BRAVE
+    country="FR",
+    language="fr", 
+    n_results=10,
+    freshness=Freshness.PAST_WEEK,
+    safesearch=SafeSearch.MODERATE
+)
+
+service = FlexibleSearchService(config)
+results = service.search("intelligence artificielle 2024")
+```
+
 - **📈 Analyse de tendances** : Analyseur spécialisé pour identifier les tendances
 - **🎬 Génération de scripts** : Création automatique de scripts vidéo personnalisés
 - **📦 Recherche en batch** : Traitement de plusieurs requêtes simultanément
@@ -23,7 +54,11 @@ Le Service de Recherche Flexible est conçu pour offrir une interface modulaire 
 pip install requests python-dotenv
 
 # Configurer la clé API
-export BRAVE_API_KEY="your_brave_api_key_here"
+export BRAVE_API_KEY="your_brave_api_key"
+
+# Google Custom Search API  
+export GOOGLE_API_KEY="your_google_api_key"
+export GOOGLE_SEARCH_ENGINE_ID="your_search_engine_id"
 ```
 
 ## 📖 Utilisation
@@ -165,7 +200,63 @@ Content-Type: application/json
 }
 ```
 
-## ⚙️ Configuration
+## 🌐 Providers Supportés
+
+### 🛡️ **Brave Search API**
+- **Avantages** : Privé, sans tracking, résultats récents
+- **Limites** : Jusqu'à 20 résultats par requête
+- **Configuration** : Variable `BRAVE_API_KEY`
+
+### 🔍 **Google Custom Search API**  
+- **Avantages** : Index Google, métadonnées riches, gratuit (100 requêtes/jour)
+- **Limites** : Max 10 résultats par requête, moteur personnalisé requis
+- **Configuration** : Variables `GOOGLE_API_KEY` + `GOOGLE_SEARCH_ENGINE_ID`
+
+### 📊 **Comparaison des Providers**
+
+| Aspect | Google Custom Search | Brave Search |
+|--------|---------------------|--------------|
+| **Résultats/requête** | Max 10 | Max 20 |
+| **Coût** | Gratuit (100/jour) | Plan selon usage |
+| **Personnalisation** | Moteur personnalisé | Goggles |
+| **Métadonnées** | Estimation + temps | Standard |
+| **Privacy** | Standard Google | Axé privacy |
+| **Setup** | Cloud Console + CSE | API Key simple |
+
+### 🚀 **Utilisation Multi-Provider**
+
+```python
+# Comparaison automatique Google vs Brave
+results_google = QuickSearch.search("AI tools", provider="google")
+results_brave = QuickSearch.search("AI tools", provider="brave")
+
+# Configuration avec fallback
+try:
+    results = google_service.search(query)
+except Exception:
+    results = brave_service.search(query)  # Fallback
+```
+
+## 🛠️ Configuration
+
+### Variables d'environnement
+
+```bash
+# Brave Search API
+export BRAVE_API_KEY="your_brave_api_key"
+
+# Google Custom Search API  
+export GOOGLE_API_KEY="your_google_api_key"
+export GOOGLE_SEARCH_ENGINE_ID="your_search_engine_id"
+```
+
+### 🔧 **Setup Google Custom Search**
+
+1. **Créer un projet** sur [Google Cloud Console](https://console.cloud.google.com/)
+2. **Activer l'API** Custom Search JSON API
+3. **Créer une clé API** dans "Credentials"
+4. **Créer un moteur de recherche** sur [cse.google.com](https://cse.google.com/)
+5. **Récupérer l'ID** du moteur (cx parameter)
 
 ### SearchConfig Options
 

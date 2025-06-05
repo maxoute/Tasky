@@ -1,97 +1,327 @@
-/* Styles pour App.jsx */
+/* Styles pour App.jsx - Version simplifiée sans effets fatigants */
 .app-container {
   display: flex;
   min-height: 100vh;
+  background: #f9fafb;
 }
 
 .main-content {
   flex: 1;
-  padding: 2rem;
+  padding: 1.5rem;
   overflow-y: auto;
+  background: transparent;
 } 
 
-/* Animations d'entrée */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* Sidebar noire simple */
+.sidebar {
+  position: relative;
+  background: linear-gradient(180deg, #111827 0%, #000000 100%);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border-right: 1px solid rgba(55, 65, 81, 0.3);
 }
 
-.animate-fadeInUp {
-  animation: fadeInUp 0.6s ease-out forwards;
-  opacity: 0;
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  padding: 0.875rem 1rem;
+  margin: 0.25rem 0.5rem;
+  border-radius: 0.5rem;
+  color: rgba(229, 231, 235, 0.8);
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+  font-weight: 500;
+  font-size: 0.875rem;
 }
 
-/* Effets de hover harmonieux */
+.sidebar-item:hover {
+  background: rgba(55, 65, 81, 0.8);
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.sidebar-item.active {
+  background: #3b82f6;
+  color: white;
+}
+
+/* Hamburger menu simple */
+.hamburger-menu {
+  position: relative;
+  z-index: 1000;
+  transition: opacity 0.2s ease;
+}
+
+.hamburger-menu:hover {
+  opacity: 0.8;
+}
+
+/* Animations simples et douces */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-fadeInUp,
+.animate-slideInLeft,
+.animate-scaleIn,
+.animate-bounceIn,
+.animate-slideDown,
+.animate-slideUp {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+/* Effets de hover très doux */
 .hover-lift {
-  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  transition: box-shadow 0.2s ease;
 }
 
 .hover-lift:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* Animations de pulse pour les éléments interactifs */
+/* Cards simples */
+.glass-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.2s ease;
+}
+
+.glass-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Boutons simples */
+.btn-primary {
+  background: #3b82f6;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  color: white;
+  transition: background-color 0.2s ease;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background: #2563eb;
+}
+
+.btn-secondary {
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  color: #374151;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  border-color: #9ca3af;
+  background: #f9fafb;
+}
+
+/* Inputs simples */
+.input-modern {
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  transition: border-color 0.2s ease;
+  font-size: 0.875rem;
+  width: 100%;
+}
+
+.input-modern:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.input-modern::placeholder {
+  color: #9ca3af;
+}
+
+/* Widgets simples */
+.widget-container {
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  border-radius: 0.75rem;
+  background: white;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.2s ease;
+}
+
+.widget-container:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Loading très simple */
 @keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.7;
-  }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
 
-.animate-pulse {
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+.loading-shimmer,
+.skeleton-loader {
+  animation: pulse 2s ease-in-out infinite;
+  background: #f3f4f6;
+  border-radius: 0.25rem;
 }
 
-/* Gradient de fond fluide */
-.bg-gradient-animated {
-  background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
-  background-size: 400% 400%;
-  animation: gradientShift 15s ease infinite;
+/* Micro-interactions douces */
+.btn-micro {
+  transition: opacity 0.2s ease;
+  cursor: pointer;
 }
 
-@keyframes gradientShift {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
+.btn-micro:hover {
+  opacity: 0.8;
 }
 
-/* Styles pour les cartes avec effet de verre */
-.glass-effect {
-  backdrop-filter: blur(10px);
-  background: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+.btn-micro:active {
+  transform: scale(0.98);
 }
 
-/* Amélioration du scroll */
+/* Toasts simples */
+.toast-container {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 9999;
+  max-width: 400px;
+}
+
+.toast {
+  padding: 1rem;
+  margin-bottom: 0.5rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  color: white;
+}
+
+.toast-success { background: #10b981; }
+.toast-error { background: #ef4444; }
+.toast-info { background: #3b82f6; }
+.toast-warning { background: #f59e0b; }
+
+/* Progress bars simples */
+.progress-bar {
+  width: 100%;
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-bar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: #3b82f6;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+/* Scroll simple et discret */
 ::-webkit-scrollbar {
   width: 6px;
 }
 
 ::-webkit-scrollbar-track {
   background: #f1f1f1;
-  border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb {
   background: #c1c1c1;
-  border-radius: 10px;
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
+  background: #a1a1a1;
+}
+
+/* Responsivité */
+@media (max-width: 768px) {
+  .main-content {
+    padding: 1rem;
+  }
+  
+  .widget-container {
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+  
+  .btn-primary, .btn-secondary {
+    padding: 0.625rem 1.25rem;
+    font-size: 0.875rem;
+  }
+
+  .input-modern {
+    padding: 0.625rem 0.875rem;
+    font-size: 0.875rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+
+  .sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  .toast-container {
+    left: 1rem;
+    right: 1rem;
+    max-width: none;
+  }
+}
+
+/* Animations de liste très réduites */
+.stagger-item {
+  opacity: 0;
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+.stagger-item:nth-child(1) { animation-delay: 0.05s; }
+.stagger-item:nth-child(2) { animation-delay: 0.1s; }
+.stagger-item:nth-child(3) { animation-delay: 0.15s; }
+.stagger-item:nth-child(4) { animation-delay: 0.2s; }
+.stagger-item:nth-child(5) { animation-delay: 0.25s; }
+
+/* Focus pour accessibilité */
+:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Désactiver animations sur mobile */
+@media (hover: none) and (pointer: coarse) {
+  .hover-lift:hover {
+    transform: none;
+  }
+  
+  .btn-micro:hover {
+    transform: none;
+    opacity: 1;
+  }
+  
+  .btn-primary:hover {
+    transform: none;
+  }
+  
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 } 

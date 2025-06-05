@@ -15,8 +15,84 @@ class BraveSearchService:
         self.api_key = os.getenv('BRAVE_API_KEY')
         self.base_url = "https://api.search.brave.com/res/v1/web/search"
         
+        # Configuration webhook N8N
+        self.n8n_webhook_url = os.getenv('N8N_WEBHOOK_URL')
+        self.n8n_enabled = os.getenv('N8N_WEBHOOK_ENABLED', 'false').lower() == 'true'
+        
         if not self.api_key:
             logger.warning("BRAVE_API_KEY non trouvée dans les variables d'environnement")
+        
+        if self.n8n_enabled and not self.n8n_webhook_url:
+            logger.warning("N8N_WEBHOOK_URL non trouvée mais webhook activé")
+    
+    def send_to_n8n(self, data: Dict[str, Any], event_type: str = "brave_search_result") -> Dict[str, Any]:
+        """
+        Envoie les données vers N8N via webhook
+        
+        Args:
+            data: Données à envoyer
+            event_type: Type d'événement (brave_search_result, video_script_generated, etc.)
+        
+        Returns:
+            Dict avec le statut de l'envoi
+        """
+        if not self.n8n_enabled:
+            logger.info("Webhook N8N désactivé")
+            return {"status": "disabled", "message": "Webhook N8N désactivé"}
+        
+        if not self.n8n_webhook_url:
+            logger.error("URL webhook N8N manquante")
+            return {"status": "error", "message": "URL webhook N8N manquante"}
+        
+        # Préparer les données pour N8N
+        webhook_payload = {
+            "event_type": event_type,
+            "timestamp": datetime.now().isoformat(),
+            "source": "brave_search_service",
+            "data": data,
+            "metadata": {
+                "generated_by": "Orra Academy - Brave Search Service",
+                "version": "1.0"
+            }
+        }
+        
+        try:
+            logger.info(f"Envoi vers N8N: {event_type}")
+            
+            headers = {
+                "Content-Type": "application/json",
+                "User-Agent": "Orra-Academy-BraveSearch/1.0"
+            }
+            
+            response = requests.post(
+                self.n8n_webhook_url,
+                json=webhook_payload,
+                headers=headers,
+                timeout=30
+            )
+            
+            response.raise_for_status()
+            
+            logger.info(f"Données envoyées avec succès vers N8N - Status: {response.status_code}")
+            
+            return {
+                "status": "success",
+                "status_code": response.status_code,
+                "message": "Données envoyées vers N8N avec succès",
+                "webhook_response": response.text if response.text else None
+            }
+            
+        except requests.exceptions.Timeout:
+            logger.error("Timeout lors de l'envoi vers N8N")
+            return {"status": "error", "message": "Timeout webhook N8N"}
+        
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Erreur webhook N8N: {e}")
+            return {"status": "error", "message": f"Erreur webhook: {str(e)}"}
+        
+        except Exception as e:
+            logger.error(f"Erreur inattendue webhook N8N: {e}")
+            return {"status": "error", "message": f"Erreur inattendue: {str(e)}"}
     
     def search(self, 
                query: str,
@@ -102,6 +178,13 @@ class BraveSearchService:
         
         # Extraire et formater les informations utiles
         formatted_results = self._format_video_research(results, video_prompt)
+        
+        # Envoyer vers N8N si activé
+        webhook_result = self.send_to_n8n(
+            data=formatted_results,
+            event_type="video_content_research"
+        )
+        formatted_results["webhook_status"] = webhook_result
         
         return formatted_results
     
@@ -344,24 +427,30 @@ class BraveSearchService:
         Returns:
             Dict contenant le script personnalisé et les sources
         """
-        # 1. Rechercher du contenu spécifique sur le sujet
+        
+        # 1. NOUVEAU : Envoyer d'abord le prompt vers N8N
+        prompt_webhook_result = self.send_video_prompt_to_n8n(topic, target_audience)
+        request_id = prompt_webhook_result.get("request_id", f"video_{datetime.now().strftime('%Y%m%d_%H%M%S')}")
+        
+        # 2. Rechercher du contenu spécifique sur le sujet
         search_results = self.search_for_video_content(f"{topic} tutoriel français 2024")
         
-        # 2. Rechercher les tendances et insights
+        # 3. Rechercher les tendances et insights
         trends_data = self.search_trends_and_insights(topic.split()[0])  # Premier mot du topic
         
         if "error" in search_results or "error" in trends_data:
             return {"error": "Impossible de récupérer les données de recherche"}
         
-        # 3. Extraire les informations clés
+        # 4. Extraire les informations clés
         key_points = search_results.get("research_summary", {}).get("key_points", [])
         trends = trends_data.get("trends", [])
         recent_developments = trends_data.get("recent_developments", [])
         
-        # 4. Générer le script personnalisé
+        # 5. Générer le script personnalisé
         script = self._create_personalized_script(topic, target_audience, key_points, trends, recent_developments)
         
-        return {
+        # Préparer la réponse finale
+        final_result = {
             "script": script,
             "research_data": {
                 "key_points": key_points,
@@ -369,8 +458,19 @@ class BraveSearchService:
                 "sources_count": search_results.get("research_summary", {}).get("total_sources", 0),
                 "content_suggestions": search_results.get("research_summary", {}).get("content_suggestions", [])
             },
-            "generated_at": datetime.now().isoformat()
+            "generated_at": datetime.now().isoformat(),
+            "request_id": request_id,
+            "prompt_webhook_status": prompt_webhook_result
         }
+        
+        # 6. Envoyer le résultat final vers N8N
+        final_webhook_result = self.send_to_n8n(
+            data=final_result,
+            event_type="video_script_generated"
+        )
+        final_result["final_webhook_status"] = final_webhook_result
+        
+        return final_result
     
     def _create_personalized_script(self, topic: str, audience: str, key_points: List, trends: List, developments: List) -> str:
         """Crée un script personnalisé avec le style de Maxens/Ryan"""
@@ -457,6 +557,83 @@ N'hésitez pas à me poser vos questions en commentaires, j'y réponds réguliè
 """
         
         return intro + main_content + cta + conclusion
+
+    def send_video_prompt_to_n8n(self, topic: str, target_audience: str) -> Dict[str, Any]:
+        """
+        Envoie le prompt de génération vidéo vers N8N avant traitement
+        
+        Args:
+            topic: Sujet de la vidéo
+            target_audience: Public cible
+        
+        Returns:
+            Dict avec le statut de l'envoi
+        """
+        if not self.n8n_enabled:
+            logger.info("Webhook N8N désactivé pour l'envoi du prompt")
+            return {"status": "disabled", "message": "Webhook N8N désactivé"}
+        
+        if not self.n8n_webhook_url:
+            logger.error("URL webhook N8N manquante pour l'envoi du prompt")
+            return {"status": "error", "message": "URL webhook N8N manquante"}
+        
+        # Préparer les données du prompt pour N8N
+        prompt_payload = {
+            "event_type": "video_prompt_received",
+            "timestamp": datetime.now().isoformat(),
+            "source": "brave_search_service",
+            "data": {
+                "topic": topic,
+                "target_audience": target_audience,
+                "request_id": f"video_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+                "status": "prompt_received",
+                "next_action": "generate_script"
+            },
+            "metadata": {
+                "generated_by": "Orra Academy - Video Script Generator",
+                "version": "1.0",
+                "user": "Maxens - CTO Orra Academy"
+            }
+        }
+        
+        try:
+            logger.info(f"Envoi prompt vidéo vers N8N: {topic}")
+            
+            headers = {
+                "Content-Type": "application/json",
+                "User-Agent": "Orra-Academy-VideoPrompt/1.0"
+            }
+            
+            response = requests.post(
+                self.n8n_webhook_url,
+                json=prompt_payload,
+                headers=headers,
+                timeout=30
+            )
+            
+            response.raise_for_status()
+            
+            logger.info(f"Prompt vidéo envoyé avec succès vers N8N - Status: {response.status_code}")
+            
+            return {
+                "status": "success",
+                "status_code": response.status_code,
+                "message": "Prompt vidéo envoyé vers N8N avec succès",
+                "request_id": prompt_payload["data"]["request_id"],
+                "webhook_response": response.text if response.text else None
+            }
+            
+        except requests.exceptions.Timeout:
+            logger.error("Timeout lors de l'envoi du prompt vers N8N")
+            return {"status": "error", "message": "Timeout webhook N8N pour le prompt"}
+        
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Erreur webhook N8N pour le prompt: {e}")
+            return {"status": "error", "message": f"Erreur webhook prompt: {str(e)}"}
+        
+        except Exception as e:
+            logger.error(f"Erreur inattendue webhook N8N pour le prompt: {e}")
+            return {"status": "error", "message": f"Erreur inattendue prompt: {str(e)}"}
 
 
 # Instance globale du service
